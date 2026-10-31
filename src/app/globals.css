@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0A1410;
+  --foreground: #F6F4ED;
+  --forest: #19372D;
+  --charcoal: #111713;
+  --gold: #B79A62;
+  --gold-light: #D8C296;
+  --sage: #DDE4D9;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #0A1410;
+  color: #F6F4ED;
+}
+
+body {
+  background-color: #0A1410;
+  color: #F6F4ED;
+  overflow-x: hidden;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+::selection {
+  background-color: #B79A62;
+  color: #0A1410;
+}
+
+/* Minimalist scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A1410;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #19372D;
+  border-radius: 3px;
+  border: 1px solid rgba(183, 154, 98, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B79A62;
+}
+
+/* ==========================================================================
+   STRONG MODERN DIRECTION ANIMATIONS & LUXURY SHADERS
+   ========================================================================== */
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.4deg);
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+    filter: drop-shadow(0 0 15px rgba(183, 154, 98, 0.3));
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 35px rgba(183, 154, 98, 0.65));
+  }
+}
+
+@keyframes aura-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-aura {
+  animation: aura-rotate 20s linear infinite;
+}
+
+.shimmer-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.22),
+    transparent
+  );
+  animation: shimmer-sweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #F6F4ED 0%, #E8D6AC 40%, #B79A62 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #E8D6AC 0%, #B79A62 50%, #19372D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
