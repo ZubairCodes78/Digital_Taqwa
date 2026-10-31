@@ -21,43 +21,45 @@ export function TheVision() {
         {/* Parent Content Brand Attribution Card — Glassmorphic 3D Card */}
         <div className="mb-14">
           <TiltCard3D maxTilt={5}>
-            <div className="p-8 sm:p-10 rounded-3xl bg-[#12241C]/65 backdrop-blur-2xl border border-[#B79A62]/30 shadow-[0_16px_50px_0_rgba(0,0,0,0.55)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex items-start sm:items-center space-x-5">
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-[#B79A62]/50 shadow-2xl shrink-0 group-hover:scale-105 transition-transform bg-[#0a1410] ring-2 ring-[#B79A62]/20">
+            <div className="p-5 sm:p-8 md:p-10 rounded-3xl bg-[#12241C]/65 backdrop-blur-2xl border border-[#B79A62]/30 shadow-[0_16px_50px_0_rgba(0,0,0,0.55)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full md:w-auto">
+                <div className="relative w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl overflow-hidden border border-[#B79A62]/50 shadow-2xl shrink-0 group-hover:scale-105 transition-transform bg-[#0a1410] ring-2 ring-[#B79A62]/20">
                   <Image
                     src="/barakah-habits-logo.jpg"
                     alt="Barakah Habits Daily Logo"
                     fill
-                    sizes="(max-width: 640px) 64px, 80px"
+                    sizes="(max-width: 640px) 56px, 80px"
                     className="object-cover"
                     priority
                   />
                 </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-[11px] uppercase tracking-widest text-[#B79A62] font-mono font-semibold">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#19372D] border border-[#B79A62]/35 text-[10px] sm:text-[11px] uppercase tracking-wider text-[#E8D6AC] font-mono font-semibold whitespace-nowrap">
                       Parent Media Channel
                     </span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#B79A62]" />
-                    <span className="text-xs text-[#DDE4D9]/70 font-mono">Global Islamic Community</span>
+                    <span className="hidden sm:inline w-1 h-1 rounded-full bg-[#B79A62]" />
+                    <span className="text-[11px] text-[#DDE4D9]/70 font-mono whitespace-nowrap">
+                      Global Islamic Community
+                    </span>
                   </div>
-                  <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] mt-0.5">
+                  <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] tracking-tight">
                     Barakah Habits Daily
                   </h3>
-                  <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-normal mt-1 max-w-xl leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-normal mt-1.5 max-w-xl leading-relaxed">
                     Inspiring Muslims across Instagram, YouTube, and TikTok toward intentional Sunnah habits, mindful mornings, and spiritual presence.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end shrink-0">
+              <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full md:w-auto pt-3 md:pt-0 border-t border-white/5 md:border-t-0 shrink-0">
                 <div className="flex items-center space-x-2">
                   <a
                     href={SOCIAL_PROFILES.instagram.url}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Instagram"
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all"
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all shadow-sm"
                     title="Instagram"
                   >
                     <Instagram className="w-4 h-4" />
@@ -67,7 +69,7 @@ export function TheVision() {
                     target="_blank"
                     rel="noreferrer"
                     aria-label="YouTube"
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all"
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all shadow-sm"
                     title="YouTube"
                   >
                     <Youtube className="w-4 h-4" />
@@ -77,7 +79,7 @@ export function TheVision() {
                     target="_blank"
                     rel="noreferrer"
                     aria-label="TikTok"
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all"
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#B79A62] flex items-center justify-center transition-all shadow-sm"
                     title="TikTok"
                   >
                     <TikTokIcon className="w-4 h-4" />
@@ -100,7 +102,7 @@ export function TheVision() {
 
         {/* Short Vision & Research Mandate — Frosted Glass Container */}
         <TiltCard3D maxTilt={3}>
-          <div className="p-8 sm:p-12 md:p-14 rounded-3xl bg-[#10221A]/60 backdrop-blur-2xl border border-[#B79A62]/35 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-center">
+          <div className="p-6 sm:p-10 md:p-14 rounded-3xl bg-[#10221A]/60 backdrop-blur-2xl border border-[#B79A62]/35 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-center">
             <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-[#14261F]/80 border border-[#B79A62]/35 mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-[#B79A62]" />
               <span className="text-[11px] uppercase tracking-widest text-[#E8D6AC] font-mono font-semibold">

@@ -57,7 +57,7 @@ export function TheProblem() {
             const Icon = item.icon;
             return (
               <TiltCard3D key={idx} maxTilt={8}>
-                <div className="h-full p-8 rounded-3xl bg-[#12241C]/55 backdrop-blur-2xl border border-[#B79A62]/25 hover:border-[#B79A62]/60 hover:bg-[#162D23]/70 transition-all duration-300 shadow-[0_16px_40px_0_rgba(0,0,0,0.5)] group flex flex-col justify-between">
+                <div className="h-full p-6 sm:p-8 rounded-3xl bg-[#12241C]/55 backdrop-blur-2xl border border-[#B79A62]/25 hover:border-[#B79A62]/60 hover:bg-[#162D23]/70 transition-all duration-300 shadow-[0_16px_40px_0_rgba(0,0,0,0.5)] group flex flex-col justify-between">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-[#19372D]/90 border border-[#B79A62]/40 text-[#B79A62] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-[#19372D]/50">
                       <Icon className="w-6 h-6" />

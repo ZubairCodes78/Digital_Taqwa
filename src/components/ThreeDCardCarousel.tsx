@@ -101,7 +101,7 @@ export function ThreeDCardCarousel({
     >
       {/* 3D Stage Container */}
       <div
-        className="relative h-[390px] sm:h-[430px] md:h-[460px] w-full flex items-center justify-center overflow-visible"
+        className="relative h-[410px] sm:h-[430px] md:h-[460px] w-full flex items-center justify-center overflow-visible"
         style={{
           perspective: "1200px",
           transformStyle: "preserve-3d",
@@ -163,7 +163,7 @@ export function ThreeDCardCarousel({
             <div
               key={slide.id}
               onClick={() => !isCurrent && goToSlide(index)}
-              className={`absolute top-0 bottom-0 w-[90%] sm:w-[480px] md:w-[540px] rounded-3xl p-6 sm:p-8 md:p-9 flex flex-col justify-between cursor-pointer ${
+              className={`absolute top-0 bottom-0 w-[92%] sm:w-[480px] md:w-[540px] rounded-3xl p-5 sm:p-8 md:p-9 flex flex-col justify-between cursor-pointer ${
                 isCurrent
                   ? "bg-gradient-to-b from-[#183226]/95 via-[#12251D]/90 to-[#0A1410]/95 border-2 border-[#B79A62]/65 shadow-[0_24px_60px_0_rgba(0,0,0,0.85),0_0_35px_rgba(183,154,98,0.25)]"
                   : "bg-[#102018]/85 border border-[#B79A62]/25 shadow-[0_12px_30px_0_rgba(0,0,0,0.6)] backdrop-blur-xl hover:border-[#B79A62]/45"

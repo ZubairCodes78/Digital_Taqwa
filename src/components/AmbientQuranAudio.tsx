@@ -275,38 +275,35 @@ export function AmbientQuranAudio() {
         <div id="yt-exclusive-audio-frame" />
       </div>
 
-      {/* Floating Sound Toggle Pill — Ultra Sleek & Compact */}
-      <div className="fixed bottom-5 right-5 z-40">
+      {/* Floating Sound Controller — Pure Round Circular Emblem on Right Bottom Corner */}
+      <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
         <button
           onClick={toggleSound}
-          className="group flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#0A1410]/90 backdrop-blur-xl border border-[#B79A62]/35 text-[#F6F4ED] hover:border-[#B79A62] hover:bg-[#14261F] transition-all shadow-xl hover:scale-105 active:scale-95 text-left"
+          className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0D1C15]/95 backdrop-blur-xl border-2 border-[#B79A62]/65 text-[#F6F4ED] hover:border-[#B79A62] hover:bg-[#162D23] transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.6),0_0_20px_rgba(183,154,98,0.25)] hover:shadow-[0_4px_30px_rgba(0,0,0,0.7),0_0_30px_rgba(183,154,98,0.45)] hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
           aria-label={isPlaying ? "Pause Recitation" : "Play Recitation"}
-          title={`${currentTrack.title} (${currentTrackIndex === 0 ? "1/2" : "2/2"}) — ${currentTrack.reciter}`}
+          title={`${currentTrack.title} (${currentTrackIndex === 0 ? "Track 1" : "Track 2"}) — ${currentTrack.reciter} | Tap to ${isPlaying ? "Pause" : "Play"}`}
         >
+          {/* Animated Orbital Ring When Active */}
+          {isPlaying && (
+            <div className="absolute -inset-1 rounded-full border border-dashed border-[#B79A62]/50 animate-[spin_10s_linear_infinite] pointer-events-none" />
+          )}
+
+          {/* Small Round Track Badge on Top Right of Circle */}
+          <span
+            className={`absolute -top-1 -right-1 w-5 h-5 rounded-full font-mono text-[9px] font-black flex items-center justify-center shadow-md border border-[#0A1410] transition-colors ${
+              isPlaying
+                ? "bg-[#B79A62] text-[#0A1410]"
+                : "bg-[#19372D] text-[#DDE4D9] border-[#B79A62]/40"
+            }`}
+          >
+            {currentTrackIndex === 0 ? "1" : "2"}
+          </span>
+
+          {/* Centered Volume Icon */}
           {isPlaying ? (
-            <>
-              <Volume2 className="w-3.5 h-3.5 text-[#B79A62] shrink-0" />
-              <div className="flex items-center space-x-1.5 leading-none">
-                <span className="text-[11px] font-display font-bold uppercase tracking-wider text-[#E8D6AC]">
-                  {currentTrack.title}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#B79A62]/20 text-[#E8D6AC] font-mono font-medium">
-                  {currentTrackIndex === 0 ? "1/2" : "2/2"}
-                </span>
-              </div>
-              <span className="flex items-center space-x-0.5 pl-0.5" aria-hidden="true">
-                <span className="w-0.5 h-2 bg-[#B79A62] rounded-full animate-pulse" />
-                <span className="w-0.5 h-3 bg-[#B79A62] rounded-full animate-pulse delay-75" />
-                <span className="w-0.5 h-1.5 bg-[#B79A62] rounded-full animate-pulse delay-150" />
-              </span>
-            </>
+            <Volume2 className="w-5 h-5 text-[#E8D6AC] transition-transform group-hover:scale-110" />
           ) : (
-            <>
-              <VolumeX className="w-3.5 h-3.5 text-[#DDE4D9]/50 shrink-0" />
-              <span className="text-[10px] uppercase font-mono tracking-wider text-[#DDE4D9]/70 leading-none">
-                Recitation Paused
-              </span>
-            </>
+            <VolumeX className="w-5 h-5 text-[#DDE4D9]/60 transition-transform group-hover:scale-110" />
           )}
         </button>
       </div>
