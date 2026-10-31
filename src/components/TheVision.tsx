@@ -30,7 +30,7 @@ export function TheVision() {
                     fill
                     sizes="(max-width: 640px) 56px, 80px"
                     className="object-cover"
-                    priority
+                    loading="lazy"
                   />
                 </div>
                 <div className="min-w-0 flex-1">

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Volume2, VolumeX, Play, X } from "lucide-react";
 
 declare global {
   interface Window {
@@ -20,15 +20,13 @@ interface RecitationTrack {
 const RECITATIONS: RecitationTrack[] = [
   {
     // 1st Recitation: Surah Al-Mu'minun by Sheikh Yasser Al-Dosari
-    // https://www.youtube.com/watch?v=gDl6s--vkmg
     id: "gDl6s--vkmg",
     title: "Surah Al-Mu’minun",
     reciter: "Sheikh Yasser Al-Dosari",
     verseRef: "Qul Limanil Ardu Wa Man Fiha",
   },
   {
-    // 2nd Recitation: Surah Al-Fajr (Kalla Iza Dukkati Al-Ardu)
-    // https://www.youtube.com/shorts/HKlu1PDL0x0
+    // 2nd Recitation: Surah Al-Fajr by Sheikh Yasser Al-Dosari
     id: "HKlu1PDL0x0",
     title: "Surah Al-Fajr",
     reciter: "Sheikh Yasser Al-Dosari",
@@ -39,74 +37,75 @@ const RECITATIONS: RecitationTrack[] = [
 export function AmbientQuranAudio() {
   const playerRef = useRef<any>(null);
   const currentTrackIndexRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [isReady, setIsReady] = useState<boolean>(false);
+  const [showAutoplayPrompt, setShowAutoplayPrompt] = useState<boolean>(true);
+  const [isDismissed, setIsDismissed] = useState<boolean>(false);
+
+  // Helper to start or resume playback
+  const playCurrentTrack = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.playVideo === "function") {
+      try {
+        playerRef.current.unMute();
+        playerRef.current.setVolume(90);
+        playerRef.current.playVideo();
+      } catch (e) {
+        console.warn("Audio play trigger:", e);
+      }
+    }
+  }, []);
+
+  // Helper to pause audio
+  const pauseCurrentTrack = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+      try {
+        playerRef.current.pauseVideo();
+      } catch {}
+    }
+    setIsPlaying(false);
+    isPlayingRef.current = false;
+  }, []);
+
+  // Helper to restart track 1 from the beginning when user returns to tab
+  const restartFirstTrack = useCallback(() => {
+    currentTrackIndexRef.current = 0;
+    setCurrentTrackIndex(0);
+    if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
+      try {
+        playerRef.current.loadVideoById({
+          videoId: RECITATIONS[0].id,
+          startSeconds: 0,
+        });
+        playerRef.current.unMute();
+        playerRef.current.setVolume(90);
+        playerRef.current.playVideo();
+      } catch (e) {
+        console.warn("Return playback error:", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
+    let autoplayCheckTimer: NodeJS.Timeout;
 
-    // Helper: start playback of current track
-    const playCurrentTrack = () => {
-      if (playerRef.current && typeof playerRef.current.playVideo === "function") {
-        try {
-          playerRef.current.unMute();
-          playerRef.current.playVideo();
-          setIsPlaying(true);
-          setIsMuted(false);
-        } catch (e) {
-          console.warn("Autoplay trigger note:", e);
-        }
-      }
-    };
-
-    // Helper: Pause immediately when user leaves the browser
-    const stopOnLeave = () => {
-      if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
-        try {
-          playerRef.current.pauseVideo();
-        } catch {}
-      }
-      setIsPlaying(false);
-    };
-
-    // Helper: Restart with 1st recitation from the beginning when user returns to the browser
-    const restartFirstTrackOnReturn = () => {
-      currentTrackIndexRef.current = 0;
-      setCurrentTrackIndex(0);
-      if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
-        try {
-          playerRef.current.loadVideoById({
-            videoId: RECITATIONS[0].id,
-            startSeconds: 0,
-          });
-          playerRef.current.unMute();
-          playerRef.current.playVideo();
-          setIsPlaying(true);
-          setIsMuted(false);
-        } catch (e) {
-          console.warn("Return playback error:", e);
-        }
-      }
-    };
-
-    // Tab visibility & Window focus listeners
+    // Visibility & Focus listeners (pause on leave, restart track 1 on return)
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        stopOnLeave();
+        pauseCurrentTrack();
       } else {
-        restartFirstTrackOnReturn();
+        restartFirstTrack();
       }
     };
 
     const handleWindowBlur = () => {
-      stopOnLeave();
+      pauseCurrentTrack();
     };
 
     const handleWindowFocus = () => {
       if (!document.hidden) {
-        restartFirstTrackOnReturn();
+        restartFirstTrack();
       }
     };
 
@@ -114,50 +113,30 @@ export function AmbientQuranAudio() {
     window.addEventListener("blur", handleWindowBlur);
     window.addEventListener("focus", handleWindowFocus);
 
-    // Initial zero-click user gesture listener (fallback for strict browser autoplay policies)
+    // Initial user gesture listener (fallback for strict browser autoplay policies)
     const handleFirstGesture = () => {
-      playCurrentTrack();
+      if (!isPlayingRef.current) {
+        playCurrentTrack();
+      }
       cleanupGestureListeners();
     };
 
     const cleanupGestureListeners = () => {
       window.removeEventListener("pointerdown", handleFirstGesture);
       window.removeEventListener("touchstart", handleFirstGesture);
-      window.removeEventListener("scroll", handleFirstGesture);
-      window.removeEventListener("mousemove", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
       window.removeEventListener("keydown", handleFirstGesture);
     };
 
     window.addEventListener("pointerdown", handleFirstGesture, { passive: true, once: true });
     window.addEventListener("touchstart", handleFirstGesture, { passive: true, once: true });
-    window.addEventListener("scroll", handleFirstGesture, { passive: true, once: true });
-    window.addEventListener("mousemove", handleFirstGesture, { passive: true, once: true });
+    window.addEventListener("click", handleFirstGesture, { passive: true, once: true });
     window.addEventListener("keydown", handleFirstGesture, { passive: true, once: true });
 
-    // Load YouTube IFrame API
-    const loadAPI = () => {
-      if (!window.YT || !window.YT.Player) {
-        if (!document.getElementById("youtube-iframe-api")) {
-          const script = document.createElement("script");
-          script.id = "youtube-iframe-api";
-          script.src = "https://www.youtube.com/iframe_api";
-          const firstScript = document.getElementsByTagName("script")[0];
-          firstScript?.parentNode?.insertBefore(script, firstScript);
-        }
-
-        const prevCallback = window.onYouTubeIframeAPIReady;
-        window.onYouTubeIframeAPIReady = () => {
-          if (prevCallback) prevCallback();
-          if (isMounted) mountPlayer();
-        };
-      } else {
-        mountPlayer();
-      }
-    };
-
+    // Mount YouTube player
     const mountPlayer = () => {
       const container = document.getElementById("yt-exclusive-audio-frame");
-      if (!container || playerRef.current) return;
+      if (!container || playerRef.current || !window.YT || !window.YT.Player) return;
 
       try {
         playerRef.current = new window.YT.Player("yt-exclusive-audio-frame", {
@@ -176,26 +155,34 @@ export function AmbientQuranAudio() {
           events: {
             onReady: (event: any) => {
               if (!isMounted) return;
-              setIsReady(true);
               try {
-                event.target.setVolume(85);
+                event.target.setVolume(90);
                 event.target.unMute();
                 event.target.playVideo();
-                setIsPlaying(true);
               } catch {}
+
+              // Check if browser allowed autoplay after 1.4s
+              autoplayCheckTimer = setTimeout(() => {
+                if (isMounted && !isPlayingRef.current) {
+                  // Autoplay blocked by browser policy — keep fallback prompt visible
+                  setShowAutoplayPrompt(true);
+                }
+              }, 1400);
             },
             onStateChange: (event: any) => {
               if (!isMounted) return;
 
-              // 1 = PLAYING
+              // 1 = PLAYING (Confirmed audible playback)
               if (event.data === 1) {
                 setIsPlaying(true);
+                isPlayingRef.current = true;
+                setShowAutoplayPrompt(false); // Hide fallback prompt immediately on playback
               } else if (event.data === 2) {
                 // 2 = PAUSED
                 setIsPlaying(false);
+                isPlayingRef.current = false;
               } else if (event.data === 0) {
-                // 0 = ENDED
-                // Requirement: When 1st recitation completes, automatically start 2nd one!
+                // 0 = ENDED -> Advance sequence: 1st track -> 2nd track -> 1st track
                 if (currentTrackIndexRef.current === 0) {
                   currentTrackIndexRef.current = 1;
                   setCurrentTrackIndex(1);
@@ -204,9 +191,7 @@ export function AmbientQuranAudio() {
                     startSeconds: 0,
                   });
                   event.target.playVideo();
-                  setIsPlaying(true);
                 } else {
-                  // After 2nd recitation completes, loop back to 1st recitation
                   currentTrackIndexRef.current = 0;
                   setCurrentTrackIndex(0);
                   event.target.loadVideoById({
@@ -214,21 +199,37 @@ export function AmbientQuranAudio() {
                     startSeconds: 0,
                   });
                   event.target.playVideo();
-                  setIsPlaying(true);
                 }
               }
             },
           },
         });
       } catch (e) {
-        console.warn("YouTube player init error:", e);
+        console.warn("YouTube player setup warning:", e);
       }
     };
 
-    loadAPI();
+    // Load or attach to YouTube IFrame API
+    if (!window.YT || !window.YT.Player) {
+      if (!document.getElementById("youtube-iframe-api")) {
+        const script = document.createElement("script");
+        script.id = "youtube-iframe-api";
+        script.src = "https://www.youtube.com/iframe_api";
+        const firstScript = document.getElementsByTagName("script")[0];
+        firstScript?.parentNode?.insertBefore(script, firstScript);
+      }
+      const prevCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prevCallback) prevCallback();
+        if (isMounted) mountPlayer();
+      };
+    } else {
+      mountPlayer();
+    }
 
     return () => {
       isMounted = false;
+      clearTimeout(autoplayCheckTimer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
@@ -240,26 +241,15 @@ export function AmbientQuranAudio() {
         } catch {}
       }
     };
-  }, []);
+  }, [playCurrentTrack, pauseCurrentTrack, restartFirstTrack]);
 
+  // Toggle sound controller
   const toggleSound = () => {
     if (!playerRef.current) return;
-
-    try {
-      if (isPlaying && !isMuted) {
-        playerRef.current.pauseVideo();
-        setIsPlaying(false);
-      } else if (!isPlaying) {
-        playerRef.current.unMute();
-        playerRef.current.playVideo();
-        setIsPlaying(true);
-        setIsMuted(false);
-      } else if (isMuted) {
-        playerRef.current.unMute();
-        setIsMuted(false);
-      }
-    } catch (e) {
-      console.warn("Error toggling YouTube sound:", e);
+    if (isPlaying) {
+      pauseCurrentTrack();
+    } else {
+      playCurrentTrack();
     }
   };
 
@@ -275,7 +265,47 @@ export function AmbientQuranAudio() {
         <div id="yt-exclusive-audio-frame" />
       </div>
 
-      {/* Floating Sound Controller — Pure Round Circular Emblem on Right Bottom Corner */}
+      {/* Elegant "Tap to Listen to Quran" Autoplay Fallback Prompt */}
+      {showAutoplayPrompt && !isPlaying && !isDismissed && (
+        <div className="fixed bottom-22 right-5 sm:bottom-24 sm:right-6 z-40 animate-fade-in-up max-w-xs sm:max-w-sm">
+          <div
+            onClick={playCurrentTrack}
+            className="group relative p-3 sm:p-4 rounded-2xl bg-[#0D1C15]/95 backdrop-blur-2xl border-2 border-[#B79A62]/65 text-[#F6F4ED] shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_25px_rgba(183,154,98,0.25)] hover:border-[#B79A62] hover:bg-[#142920] transition-all duration-300 cursor-pointer flex items-center gap-3.5"
+            role="button"
+            aria-label="Tap to Listen to Quran Recitation"
+          >
+            {/* Animated Golden Play Icon with Pulse Halo */}
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#B79A62] text-[#0A1410] flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+              <Play className="w-5 h-5 fill-current ml-0.5" />
+              <span className="absolute -inset-1 rounded-xl border border-[#B79A62]/60 animate-ping opacity-40 pointer-events-none" />
+            </div>
+
+            {/* Label & Reciter Details */}
+            <div className="min-w-0 flex-1 pr-4">
+              <span className="font-display text-xs sm:text-sm font-black text-[#F6F4ED] block leading-tight tracking-tight group-hover:text-[#E8D6AC] transition-colors">
+                Tap to Listen to Quran
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-mono text-[#E8D6AC]/85 block truncate mt-0.5">
+                {currentTrack.reciter} &bull; {currentTrack.title}
+              </span>
+            </div>
+
+            {/* Dismiss button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDismissed(true);
+              }}
+              className="absolute top-2 right-2 p-1 text-[#DDE4D9]/50 hover:text-[#DDE4D9] transition-colors rounded-full"
+              aria-label="Dismiss audio prompt"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Circular Recitation FAB in Bottom-Right Corner */}
       <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
         <button
           onClick={toggleSound}

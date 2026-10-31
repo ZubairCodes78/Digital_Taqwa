@@ -38,9 +38,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "'Inter'", "-apple-system", "sans-serif"],
-        display: ["'Outfit'", "'Plus Jakarta Sans'", "sans-serif"],
-        serif: ["'Outfit'", "'Plus Jakarta Sans'", "sans-serif"], // Replaced Times New Roman / Garamond with sleek modern display sans
+        sans: ["var(--font-sans)", "'Plus Jakarta Sans'", "'Inter'", "-apple-system", "sans-serif"],
+        display: ["var(--font-display)", "'Outfit'", "'Plus Jakarta Sans'", "sans-serif"],
+        serif: ["var(--font-display)", "'Outfit'", "'Plus Jakarta Sans'", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "monospace"],
       },
     },

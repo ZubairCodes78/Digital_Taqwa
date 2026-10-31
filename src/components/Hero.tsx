@@ -1,9 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { ArrowRight, ArrowDown } from "lucide-react";
-import { ThreeIslamicScene } from "./ThreeIslamicScene";
 import { SwipeExploreButton } from "./SwipeExploreButton";
+
+// Load 3D scene asynchronously so critical hero content paints instantly
+const ThreeIslamicScene = dynamic(
+  () => import("./ThreeIslamicScene").then((mod) => mod.ThreeIslamicScene),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 export function Hero() {
   const scrollTo = (id: string) => {

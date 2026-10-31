@@ -1,7 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { AmbientQuranAudio } from "@/components/AmbientQuranAudio";
 import "./globals.css";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const viewport: Viewport = {
   themeColor: "#F6F4ED",
@@ -76,8 +89,15 @@ export default function RootLayout({
   const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${plusJakarta.variable} ${outfit.variable}`}>
       <head>
+        {/* Instant Audio Preconnect to maximize initial Quran recitation speed */}
+        <link rel="preconnect" href="https://www.youtube.com" />
+        <link rel="preconnect" href="https://www.google.com" />
+        <link rel="dns-prefetch" href="https://www.youtube.com" />
+        <link rel="dns-prefetch" href="https://i.ytimg.com" />
+        <link rel="preload" href="https://www.youtube.com/iframe_api" as="script" />
+
         {/* Google Analytics 4 */}
         {gaId && (
           <>

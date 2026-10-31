@@ -38,13 +38,17 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
     camera.position.set(0, 0.5, 9);
 
+    const isMobile =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1));
+
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: true,
+      antialias: !isMobile, // Disable MSAA on mobile for 2-3x fillrate boost
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     renderer.shadowMap.enabled = false;
@@ -279,10 +283,10 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
     });
 
     // ==========================================
-    // GOLDEN ATMOSPHERIC DUST PARTICLES
+    // GOLDEN ATMOSPHERIC DUST PARTICLES (Optimized for Mobile)
     // ==========================================
 
-    const particleCount = 260;
+    const particleCount = isMobile ? 65 : 180;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     const particleVelocities: { x: number; y: number; z: number }[] = [];
@@ -369,6 +373,8 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
     let targetScrollY = 0;
     let currentScrollY = 0;
 
+    let isOffscreenOrPaused = false;
+
     const handleMouseMove = (e: MouseEvent) => {
       targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
       targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -376,10 +382,17 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
 
     const handleScroll = () => {
       targetScrollY = window.scrollY || 0;
+      // Pause 3D animation loop when user has scrolled past the hero/vision area to save GPU
+      isOffscreenOrPaused = targetScrollY > (window.innerHeight || 800) * 2.2;
+    };
+
+    const handleVisibility = () => {
+      isOffscreenOrPaused = document.hidden;
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("visibilitychange", handleVisibility);
 
     // Handle Resize
     const handleResize = () => {
@@ -398,6 +411,9 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Skip continuous rendering when page is hidden or offscreen
+      if (isOffscreenOrPaused) return;
 
       const elapsedTime = clock.getElapsedTime();
 
@@ -478,6 +494,7 @@ export function ThreeIslamicScene({ fixed = false }: { fixed?: boolean } = {}) {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
       cancelAnimationFrame(animationFrameId);
 
       renderer.dispose();

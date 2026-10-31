@@ -32,7 +32,6 @@ import {
   Instagram,
   Youtube,
 } from "lucide-react";
-import confetti from "canvas-confetti";
 
 interface SurveyFormState {
   // Step 1
@@ -280,6 +279,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       onSuccess?.(successPayload);
 
       try {
+        const confetti = (await import("canvas-confetti")).default;
         confetti({
           particleCount: 80,
           spread: 70,
