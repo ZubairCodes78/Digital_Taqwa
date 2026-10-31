@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { ThreeIslamicScene } from "./ThreeIslamicScene";
+import { SwipeExploreButton } from "./SwipeExploreButton";
 
 export function Hero() {
   const scrollTo = (id: string) => {
@@ -83,18 +84,8 @@ export function Hero() {
           </button>
         </div>
 
-        {/* Subtle Cinematic Swipe Prompt */}
-        <div
-          onClick={() => scrollTo("vision")}
-          className="cursor-pointer flex flex-col items-center justify-center space-y-2 opacity-75 hover:opacity-100 transition-opacity"
-        >
-          <span className="text-[10px] uppercase tracking-widest text-[#B79A62]/90 font-mono font-medium">
-            Swipe to explore
-          </span>
-          <div className="w-5 h-9 rounded-full border border-[#B79A62]/40 flex items-start justify-center p-1">
-            <span className="w-1 h-2.5 rounded-full bg-[#B79A62] animate-bounce" />
-          </div>
-        </div>
+        {/* Unique Sacred Mihrab-Style Swipe & Scroll Trigger */}
+        <SwipeExploreButton targetId="vision" className="mt-8 sm:mt-12" />
       </div>
     </section>
   );

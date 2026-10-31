@@ -24,6 +24,15 @@ html {
   scroll-behavior: smooth;
   background-color: #0A1410;
   color: #F6F4ED;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hardware accelerated backdrop compositing */
+.backdrop-blur-md,
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 body {
