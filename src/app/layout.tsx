@@ -92,11 +92,10 @@ export default function RootLayout({
     <html lang="en" className={`${plusJakarta.variable} ${outfit.variable}`}>
       <head>
         {/* Instant Audio Preconnect to maximize initial Quran recitation speed */}
-        <link rel="preconnect" href="https://www.youtube.com" />
-        <link rel="preconnect" href="https://www.google.com" />
-        <link rel="dns-prefetch" href="https://www.youtube.com" />
-        <link rel="dns-prefetch" href="https://i.ytimg.com" />
-        <link rel="preload" href="https://www.youtube.com/iframe_api" as="script" />
+        <link rel="preconnect" href="https://cdn.mp3quran.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://server11.mp3quran.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.mp3quran.net" />
+        <link rel="dns-prefetch" href="https://server11.mp3quran.net" />
 
         {/* Google Analytics 4 */}
         {gaId && (
