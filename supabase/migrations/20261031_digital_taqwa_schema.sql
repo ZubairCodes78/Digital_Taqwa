@@ -281,3 +281,19 @@ CREATE POLICY "Allow service role full access to referrals"
 
 CREATE POLICY "Allow service role full access to admin_activity_logs" 
     ON admin_activity_logs FOR ALL USING (auth.role() = 'service_role');
+
+
+-- ============================================================================
+-- BASE TABLE PERMISSIONS (GRANTS FOR ANON & AUTHENTICATED ROLES)
+-- Required by PostgreSQL so RLS policies can be evaluated
+-- ============================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+
