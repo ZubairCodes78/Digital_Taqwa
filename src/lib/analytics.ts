@@ -192,18 +192,4 @@ export function trackLead(primaryInterest: string, country: string) {
   }
 }
 
-/**
- * Track EmailVerified event
- */
-export function trackEmailVerified() {
-  if (typeof window === "undefined") return;
-
-  if (window.gtag) {
-    window.gtag("event", "email_verified");
-  }
-
-  if (window.fbq) {
-    window.fbq("trackCustom", "EmailVerified");
-  }
-}
 

@@ -32,3 +32,4 @@ CREATE POLICY "p_service_role_all_waitlist_users"
     TO service_role
     USING (true)
     WITH CHECK (true);
+
