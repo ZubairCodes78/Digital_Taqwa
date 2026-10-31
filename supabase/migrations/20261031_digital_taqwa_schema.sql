@@ -223,8 +223,18 @@ CREATE TRIGGER trg_increment_referral_count
 
 
 -- ============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES & LEAST-PRIVILEGE ROLE ACCESS
 -- ============================================================================
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated, public;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated, public;
+REVOKE ALL ON ALL ROUTINES IN SCHEMA public FROM anon, authenticated, public;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated, public;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated, public;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON ROUTINES FROM anon, authenticated, public;
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
 ALTER TABLE waitlist_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_challenges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feature_interests ENABLE ROW LEVEL SECURITY;
@@ -233,67 +243,126 @@ ALTER TABLE marketing_attribution ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_activity_logs ENABLE ROW LEVEL SECURITY;
 
--- 1. Public can insert new registrations and responses
-CREATE POLICY "Allow public insert to waitlist_users" 
-    ON waitlist_users FOR INSERT WITH CHECK (true);
+-- 1. Grant least-privilege table permissions to anon & authenticated
+-- Public intake tables: INSERT only (no SELECT/UPDATE/DELETE permissions)
+GRANT INSERT ON TABLE public.waitlist_users TO anon, authenticated;
+GRANT INSERT ON TABLE public.user_challenges TO anon, authenticated;
+GRANT INSERT ON TABLE public.feature_interests TO anon, authenticated;
+GRANT INSERT ON TABLE public.usage_priorities TO anon, authenticated;
+GRANT INSERT ON TABLE public.marketing_attribution TO anon, authenticated;
+GRANT INSERT ON TABLE public.referrals TO anon, authenticated;
 
-CREATE POLICY "Allow public insert to user_challenges" 
-    ON user_challenges FOR INSERT WITH CHECK (true);
+-- Allow sequence usage for IDs
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 
-CREATE POLICY "Allow public insert to feature_interests" 
-    ON feature_interests FOR INSERT WITH CHECK (true);
+-- Admin logs: Completely blocked from public roles (zero permissions)
+REVOKE ALL ON TABLE public.admin_activity_logs FROM anon, authenticated;
 
-CREATE POLICY "Allow public insert to usage_priorities" 
-    ON usage_priorities FOR INSERT WITH CHECK (true);
+-- Service role: Trusted server-side backend operations ONLY
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO service_role;
 
-CREATE POLICY "Allow public insert to marketing_attribution" 
-    ON marketing_attribution FOR INSERT WITH CHECK (true);
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO service_role;
 
-CREATE POLICY "Allow public insert to referrals" 
-    ON referrals FOR INSERT WITH CHECK (true);
+-- 2. Strict Row Level Security Policies
 
--- 2. Public can read minimal verification token info for email verification
-CREATE POLICY "Allow public select for verification token" 
-    ON waitlist_users FOR SELECT USING (true);
+-- waitlist_users: Strict INSERT check, zero public SELECT to prevent email harvesting
+CREATE POLICY "p_anon_insert_waitlist_users" 
+    ON waitlist_users FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (
+        email IS NOT NULL AND
+        email LIKE '%@%.%' AND
+        marketing_consent IS TRUE
+    );
 
--- 3. Public can update email_verified using verification token
-CREATE POLICY "Allow public update for email verification" 
-    ON waitlist_users FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "p_service_role_all_waitlist_users" 
+    ON waitlist_users FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
--- 4. Full administrative control granted to service_role (used by Next.js API backend)
-CREATE POLICY "Allow service role full access to waitlist_users" 
-    ON waitlist_users FOR ALL USING (auth.role() = 'service_role');
+-- user_challenges: Private community survey responses
+CREATE POLICY "p_anon_insert_user_challenges" 
+    ON user_challenges FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (user_id IS NOT NULL AND challenge_key IS NOT NULL);
 
-CREATE POLICY "Allow service role full access to user_challenges" 
-    ON user_challenges FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "p_service_role_all_user_challenges" 
+    ON user_challenges FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
-CREATE POLICY "Allow service role full access to feature_interests" 
-    ON feature_interests FOR ALL USING (auth.role() = 'service_role');
+-- feature_interests: Private feature preferences
+CREATE POLICY "p_anon_insert_feature_interests" 
+    ON feature_interests FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (user_id IS NOT NULL AND feature_key IS NOT NULL);
 
-CREATE POLICY "Allow service role full access to usage_priorities" 
-    ON usage_priorities FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "p_service_role_all_feature_interests" 
+    ON feature_interests FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
-CREATE POLICY "Allow service role full access to marketing_attribution" 
-    ON marketing_attribution FOR ALL USING (auth.role() = 'service_role');
+-- usage_priorities: Private daily habit preferences
+CREATE POLICY "p_anon_insert_usage_priorities" 
+    ON usage_priorities FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (user_id IS NOT NULL AND priority_key IS NOT NULL);
 
-CREATE POLICY "Allow service role full access to referrals" 
-    ON referrals FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "p_service_role_all_usage_priorities" 
+    ON usage_priorities FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
-CREATE POLICY "Allow service role full access to admin_activity_logs" 
-    ON admin_activity_logs FOR ALL USING (auth.role() = 'service_role');
+-- marketing_attribution: Private UTM & analytics data
+CREATE POLICY "p_anon_insert_marketing_attribution" 
+    ON marketing_attribution FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (user_id IS NOT NULL);
 
+CREATE POLICY "p_service_role_all_marketing_attribution" 
+    ON marketing_attribution FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
--- ============================================================================
--- BASE TABLE PERMISSIONS (GRANTS FOR ANON & AUTHENTICATED ROLES)
--- Required by PostgreSQL so RLS policies can be evaluated
--- ============================================================================
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+-- referrals: Private referral linkages
+CREATE POLICY "p_anon_insert_referrals" 
+    ON referrals FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (referred_user_id IS NOT NULL AND referral_code IS NOT NULL);
 
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+CREATE POLICY "p_service_role_all_referrals" 
+    ON referrals FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+-- admin_activity_logs: Completely inaccessible to anon
+CREATE POLICY "p_service_role_all_admin_activity_logs" 
+    ON admin_activity_logs FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
+
+-- 3. Secure Public Helper Function (No data leakage)
+CREATE OR REPLACE FUNCTION public.validate_referral_code(code TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS(
+    SELECT 1 FROM public.waitlist_users WHERE referral_code = trim(code)
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.validate_referral_code(TEXT) TO anon, authenticated, service_role;
 
