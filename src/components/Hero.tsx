@@ -1,11 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { SwipeExploreButton } from "./SwipeExploreButton";
 
-// Load 3D scene asynchronously so critical hero content paints instantly
+// Load 3D scene only on capable desktop devices to guarantee instant mobile performance
 const ThreeIslamicScene = dynamic(
   () => import("./ThreeIslamicScene").then((mod) => mod.ThreeIslamicScene),
   {
@@ -15,6 +16,22 @@ const ThreeIslamicScene = dynamic(
 );
 
 export function Hero() {
+  const [deviceTier, setDeviceTier] = useState<"low" | "high">("low");
+
+  useEffect(() => {
+    // Detect mobile, low-power devices, or reduced motion preference
+    const isReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isTouchMobile = window.innerWidth < 1024 || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+    const cores = navigator.hardwareConcurrency || 4;
+
+    // Use lightweight architectural background on mobile & low-powered hardware
+    if (!isReducedMotion && !isTouchMobile && cores >= 4) {
+      setDeviceTier("high");
+    } else {
+      setDeviceTier("low");
+    }
+  }, []);
+
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -24,8 +41,35 @@ export function Hero() {
 
   return (
     <section className="relative min-h-[96vh] sm:min-h-screen flex items-center justify-center pt-28 pb-20 md:pt-36 md:pb-24 overflow-hidden text-[#F6F4ED]">
-      {/* 1. CINEMATIC 3D ISLAMIC ARCHITECTURAL ENVIRONMENT (Fixed Across Page) */}
-      <ThreeIslamicScene fixed />
+      {/* 1. ADAPTIVE ARCHITECTURAL ENVIRONMENT (3D for High-End Desktop, Lightweight SVG for Mobile/Low-End) */}
+      {deviceTier === "high" ? (
+        <ThreeIslamicScene fixed />
+      ) : (
+        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute inset-0 bg-radial-gradient from-[#142A21] via-[#0D1C15] to-[#0A1410] opacity-90" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] bg-[#B79A62]/6 rounded-full blur-[90px]" />
+          <svg
+            className="absolute top-16 left-1/2 -translate-x-1/2 w-[90vw] max-w-[680px] h-[75vh] opacity-20 pointer-events-none"
+            viewBox="0 0 400 600"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M 60 580 L 60 280 C 60 170 140 100 200 40 C 260 100 340 170 340 280 L 340 580"
+              stroke="#B79A62"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+            />
+            <path
+              d="M 80 580 L 80 290 C 80 190 150 125 200 70 C 250 125 320 190 320 290 L 320 580"
+              stroke="#E8D6AC"
+              strokeWidth="1"
+              strokeOpacity="0.6"
+            />
+            <circle cx="200" cy="40" r="3" fill="#B79A62" />
+          </svg>
+        </div>
+      )}
 
       {/* Atmospheric depth vignette & soft lighting masks */}
       <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#0A1410]/40 to-[#0A1410]/95 pointer-events-none" />
