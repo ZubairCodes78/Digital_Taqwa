@@ -21,8 +21,9 @@ export function getLocalSqliteDb(): any | null {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { DatabaseSync } = require("node:sqlite");
+    const req = typeof require !== "undefined" ? require : null;
+    if (!req) return null;
+    const { DatabaseSync } = req("node:sqlite");
     sqliteDbInstance = new DatabaseSync(SQLITE_FILE);
     sqliteAvailable = true;
 

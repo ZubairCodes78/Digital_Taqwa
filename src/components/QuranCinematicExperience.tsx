@@ -49,14 +49,14 @@ export function QuranCinematicExperience() {
     }
 
     const handleFirstUserClick = () => {
-      if (audioRef.current && audioRef.current.paused && autoplayBlocked) {
+      if (audioRef.current && audioRef.current.paused) {
         audioRef.current
           .play()
           .then(() => {
             setIsPlaying(true);
             setAutoplayBlocked(false);
           })
-          .catch(() => { });
+          .catch(() => {});
       }
     };
 
@@ -64,6 +64,7 @@ export function QuranCinematicExperience() {
     return () => {
       window.removeEventListener("click", handleFirstUserClick);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync audio events
