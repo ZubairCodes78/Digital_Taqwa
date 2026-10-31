@@ -21,16 +21,12 @@ export const surveyStep3Schema = z.object({
 });
 
 export const surveyStep4Schema = z.object({
-  usage_priorities: z
-    .array(z.string())
-    .min(1, "Please select at least one priority that would drive your regular usage."),
-  expected_usage_frequency: z
+  beta_interest: z
     .string()
-    .min(1, "Please select how often you realistically expect to use the app."),
+    .min(1, "Please select your beta testing interest preference."),
 });
 
 export const surveyStep5Schema = z.object({
-  country: z.string().min(1, "Please select your country."),
   email: z
     .string()
     .trim()
@@ -38,7 +34,7 @@ export const surveyStep5Schema = z.object({
     .email("Please enter a valid email address."),
   name: z.string().trim().optional(),
   whatsapp_number: z.string().trim().optional(),
-  beta_interest: z.string().default("Yes, I am interested"),
+  country: z.string().trim().default("Global"),
   marketing_consent: z.boolean().default(false),
 });
 
@@ -46,7 +42,7 @@ export const surveyStep5Schema = z.object({
 export const completeWaitlistSchema = z.object({
   // Contact & Identity
   email: z.string().trim().toLowerCase().email("Valid email is required"),
-  country: z.string().min(1, "Country is required"),
+  country: z.string().trim().default("Global"),
   name: z.string().trim().optional(),
   whatsapp_number: z.string().trim().optional(),
   marketing_consent: z.boolean().default(false),
@@ -62,14 +58,12 @@ export const completeWaitlistSchema = z.object({
   // Step 3: Product Experience Preference
   preferred_product_type: z.string().optional(),
 
-  // Step 4: Priorities & Frequency
-  usage_priorities: z.array(z.string()).default([]),
-  expected_usage_frequency: z.string().optional(),
-
-  // Step 5: Beta testing interest
-  beta_interest: z.string().optional(),
+  // Step 4: Beta testing interest
+  beta_interest: z.string().default("Yes, I am interested"),
 
   // Legacy compatibility fields
+  usage_priorities: z.array(z.string()).default([]),
+  expected_usage_frequency: z.string().optional(),
   features: z.array(z.string()).optional(),
   primary_feature: z.string().optional(),
   honeypot: z.string().optional(),

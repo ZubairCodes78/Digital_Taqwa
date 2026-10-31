@@ -16,158 +16,7 @@ function ensureDataDir() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!fs.existsSync(DATA_FILE)) {
-    // Initialize with seed leads so testing the admin dashboard and analytics is immediate
-    const seedLeads: WaitlistUserRecord[] = [
-      {
-        id: "d9e8f7a6-b5c4-4d3e-9f0a-1a2b3c4d5e01",
-        name: "Zaid Tariq",
-        email: "zaid.tariq@example.com",
-        country: "Pakistan",
-        whatsapp_number: "+923001234567",
-        email_verified: true,
-        marketing_consent: true,
-        referral_code: "DT-ZAID01",
-        created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-        challenges: [
-          "Staying consistent with Islamic habits",
-          "Too much screen time / scrolling",
-          "Difficulty maintaining daily prayers",
-        ],
-        features: [
-          "Daily Islamic Habit Tracker",
-          "Screen-Time / App Distraction Control",
-          "Prayer Consistency Tracker",
-        ],
-        primary_feature: "Daily Islamic Habit Tracker",
-        attribution: {
-          utm_source: "instagram",
-          utm_medium: "paid",
-          utm_campaign: "scrolling_addiction",
-          utm_content: "reel_01",
-          referrer: "https://instagram.com",
-          landing_page: "https://digitaltaqwa.com/",
-        },
-      },
-      {
-        id: "d9e8f7a6-b5c4-4d3e-9f0a-1a2b3c4d5e02",
-        name: "Amina Al-Hassan",
-        email: "amina.h@example.com",
-        country: "United Kingdom",
-        whatsapp_number: "+447911123456",
-        email_verified: true,
-        marketing_consent: true,
-        referral_code: "DT-AMINA2",
-        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        challenges: [
-          "Missing Quran reading",
-          "Lack of discipline and routine",
-        ],
-        features: [
-          "Quran Reading Tracker",
-          "Daily Islamic Reminders",
-          "Personal Deen Goals",
-        ],
-        primary_feature: "Quran Reading Tracker",
-        attribution: {
-          utm_source: "youtube",
-          utm_medium: "organic",
-          utm_campaign: "launch",
-          referrer: "https://youtube.com",
-          landing_page: "https://digitaltaqwa.com/",
-        },
-      },
-      {
-        id: "d9e8f7a6-b5c4-4d3e-9f0a-1a2b3c4d5e03",
-        name: "Bilal Farooq",
-        email: "bilal.farooq@example.com",
-        country: "India",
-        whatsapp_number: "",
-        email_verified: false,
-        verification_token: "mock-token-bilal-778899",
-        verification_token_expires: new Date(Date.now() + 86400000).toISOString(),
-        marketing_consent: false,
-        referral_code: "DT-BILAL3",
-        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-        challenges: [
-          "Too much screen time / scrolling",
-          "Finding time for Deen",
-        ],
-        features: [
-          "Screen-Time / App Distraction Control",
-          "Daily Islamic Habit Tracker",
-        ],
-        primary_feature: "Screen-Time / App Distraction Control",
-        attribution: {
-          utm_source: "instagram",
-          utm_medium: "organic",
-          utm_campaign: "launch",
-          referrer: "https://instagram.com",
-          landing_page: "https://digitaltaqwa.com/",
-        },
-      },
-      {
-        id: "d9e8f7a6-b5c4-4d3e-9f0a-1a2b3c4d5e04",
-        name: "Hamza Malik",
-        email: "hamza.m@example.com",
-        country: "United States",
-        whatsapp_number: "+14155552671",
-        email_verified: true,
-        marketing_consent: true,
-        referral_code: "DT-HAMZA4",
-        created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-        challenges: [
-          "Difficulty maintaining daily prayers",
-          "Lack of discipline and routine",
-        ],
-        features: [
-          "Prayer Consistency Tracker",
-          "Progress & Streak Tracking",
-        ],
-        primary_feature: "Prayer Consistency Tracker",
-        attribution: {
-          utm_source: "direct",
-          utm_medium: "none",
-          utm_campaign: "organic",
-          referrer: "direct",
-          landing_page: "https://digitaltaqwa.com/",
-        },
-      },
-      {
-        id: "d9e8f7a6-b5c4-4d3e-9f0a-1a2b3c4d5e05",
-        name: "Fatima Noor",
-        email: "fatima.noor@example.com",
-        country: "Pakistan",
-        whatsapp_number: "+923214567890",
-        email_verified: true,
-        marketing_consent: true,
-        referral_code: "DT-FATIM5",
-        created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-        updated_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-        challenges: [
-          "Staying consistent with Islamic habits",
-          "Missing Quran reading",
-        ],
-        features: [
-          "Daily Islamic Habit Tracker",
-          "Quran Reading Tracker",
-          "Daily Islamic Reminders",
-        ],
-        primary_feature: "Daily Islamic Habit Tracker",
-        attribution: {
-          utm_source: "instagram",
-          utm_medium: "paid",
-          utm_campaign: "scrolling_addiction",
-          utm_content: "story_02",
-          referrer: "https://instagram.com",
-          landing_page: "https://digitaltaqwa.com/",
-        },
-      },
-    ];
-    fs.writeFileSync(DATA_FILE, JSON.stringify(seedLeads, null, 2), "utf-8");
+    fs.writeFileSync(DATA_FILE, "[]", "utf-8");
   }
 }
 
@@ -250,7 +99,7 @@ export async function createWaitlistUser(
   // Try Supabase first if configured
   if (isSupabaseConfigured && supabaseAdmin) {
     try {
-      // 1. Insert waitlist_users
+      // 1. Insert waitlist_users (directly marked verified, no email verification needed)
       const { data: userInsert, error: userError } = await supabaseAdmin
         .from("waitlist_users")
         .insert({
@@ -259,9 +108,10 @@ export async function createWaitlistUser(
           email: normalizedEmail,
           country: data.country,
           whatsapp_number: data.whatsapp_number || null,
-          email_verified: false,
-          verification_token: verificationToken,
-          verification_token_expires: tokenExpires,
+          email_verified: true,
+          verified_at: now,
+          verification_token: null,
+          verification_token_expires: null,
           marketing_consent: Boolean(data.marketing_consent),
           referral_code: referralCode,
           created_at: now,
@@ -327,11 +177,10 @@ export async function createWaitlistUser(
           email: normalizedEmail,
           country: data.country,
           whatsapp_number: data.whatsapp_number,
-          email_verified: false,
+          email_verified: true,
+          verified_at: now,
           marketing_consent: Boolean(data.marketing_consent),
           referral_code: referralCode,
-          verification_token: verificationToken,
-          verification_token_expires: tokenExpires,
           created_at: now,
           updated_at: now,
           challenges: data.challenges || [],
@@ -360,7 +209,7 @@ export async function createWaitlistUser(
         currentLocal.unshift(newRecord);
         writeLocalLeads(currentLocal);
 
-        return { user: newRecord, verificationToken, isNew: true };
+        return { user: newRecord, verificationToken: "", isNew: true };
       }
     } catch (err) {
       console.warn("Supabase error during creation, persisting locally:", err);
@@ -374,10 +223,9 @@ export async function createWaitlistUser(
     email: normalizedEmail,
     country: data.country,
     whatsapp_number: data.whatsapp_number,
-    email_verified: false,
+    email_verified: true,
+    verified_at: now,
     marketing_consent: Boolean(data.marketing_consent),
-    verification_token: verificationToken,
-    verification_token_expires: tokenExpires,
     referral_code: referralCode,
     created_at: now,
     updated_at: now,
@@ -406,7 +254,7 @@ export async function createWaitlistUser(
   leads.unshift(record);
   writeLocalLeads(leads);
 
-  return { user: record, verificationToken, isNew: true };
+  return { user: record, verificationToken: "", isNew: true };
 }
 
 /**
@@ -500,6 +348,7 @@ export async function getLeads(filters: {
   country?: string;
   verified?: string;
   feature?: string;
+  betaInterest?: string;
   page?: number;
   limit?: number;
 }): Promise<{ leads: WaitlistUserRecord[]; total: number; page: number; totalPages: number }> {
@@ -586,6 +435,11 @@ export async function getLeads(filters: {
     all = all.filter(
       (l) => l.primary_feature === filters.feature || (l.features || []).includes(filters.feature!)
     );
+  }
+
+  // Filter Beta Interest
+  if (filters.betaInterest && filters.betaInterest !== "all") {
+    all = all.filter((l) => l.beta_interest === filters.betaInterest);
   }
 
   const total = all.length;

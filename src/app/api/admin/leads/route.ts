@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const country = searchParams.get("country") || undefined;
   const verified = searchParams.get("verified") || undefined;
   const feature = searchParams.get("feature") || undefined;
+  const betaInterest = searchParams.get("betaInterest") || undefined;
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "15", 10);
 
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
       country,
       verified,
       feature,
+      betaInterest,
       page,
       limit,
     });

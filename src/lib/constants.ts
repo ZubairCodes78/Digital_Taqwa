@@ -90,58 +90,35 @@ export const QURAN_AUDIO = {
 
 // STEP 1 — CURRENT CHALLENGES
 export const SURVEY_CHALLENGES = [
-  "Difficulty maintaining Islamic habits",
-  "Excessive screen time and scrolling",
-  "Inconsistent Quran reading",
-  "Difficulty maintaining prayer routines",
-  "Lack of discipline",
-  "Not giving enough time to Deen",
-  "Difficulty finding reliable Islamic learning resources",
+  "Maintaining daily Islamic habits",
+  "Consistency with Quran reading",
+  "Maintaining prayer routines",
+  "Excessive screen time and distractions",
+  "Lack of discipline and consistency",
   "Other",
 ] as const;
 
 // STEP 2 — WHAT WOULD HELP YOU?
 export const SURVEY_DESIRED_SOLUTIONS = [
-  "Help build consistent Islamic habits",
-  "Help maintain Quran reading",
-  "Help organize prayer routines",
-  "Help reduce digital distractions",
-  "Provide reliable Islamic reminders",
-  "Help set personal Deen goals",
-  "Provide structured Islamic learning",
-  "Help track personal progress",
-  "Something different",
+  "Islamic habit building",
+  "Quran consistency",
+  "Prayer reminders and routines",
+  "Reducing digital distractions",
+  "Daily Islamic reminders",
+  "Structured Deen goals",
+  "Other",
 ] as const;
 
 // STEP 3 — PREFERRED EXPERIENCE
 export const SURVEY_PRODUCT_TYPES = [
-  "Simple Islamic habit-building tool",
-  "Complete Islamic lifestyle companion",
+  "Islamic lifestyle companion",
+  "Islamic habit-building platform",
+  "Quran and prayer companion",
   "Digital self-discipline tool",
-  "Islamic learning platform",
-  "Combination of different ideas",
   "Not sure yet",
 ] as const;
 
-// STEP 4 — USAGE PRIORITIES & FREQUENCY
-export const SURVEY_USAGE_PRIORITIES = [
-  "Simple and easy to use",
-  "Useful daily reminders",
-  "Personal progress tracking",
-  "Meaningful content",
-  "Minimal distractions",
-  "Free access to essential features",
-  "Personalized experience",
-] as const;
-
-export const SURVEY_USAGE_FREQUENCIES = [
-  "Multiple times a day",
-  "Once a day",
-  "A few times a week",
-  "Only when needed",
-  "Not sure",
-] as const;
-
+// STEP 4 — BETA TESTING PARTICIPATION
 export const SURVEY_BETA_INTEREST_OPTIONS = [
   "Yes, I am interested",
   "Maybe, depending on the application",

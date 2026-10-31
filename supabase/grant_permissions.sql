@@ -92,14 +92,13 @@ DROP POLICY IF EXISTS "p_service_role_all_admin_activity_logs" ON admin_activity
 -- 7. DEFINE STRICT RLS POLICIES FOR INTAKE & PRIVACY
 
 -- TABLE 1: waitlist_users
--- Strict INSERT check: valid email format & marketing consent must be provided
+-- Strict INSERT check: valid email format; marketing consent is optional
 CREATE POLICY "p_anon_insert_waitlist_users"
     ON waitlist_users FOR INSERT
     TO anon, authenticated
     WITH CHECK (
         email IS NOT NULL AND
-        email LIKE '%@%.%' AND
-        marketing_consent IS TRUE
+        email LIKE '%@%.%'
     );
 
 -- Strict Privacy: Service role only has full access (server-side Next.js API)

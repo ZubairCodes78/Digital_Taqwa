@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,13 +15,16 @@ import {
   X,
   Users,
   CheckCircle,
-  XCircle,
+  HelpCircle,
+  Sparkles,
   TrendingUp,
-  MessageSquare,
-  Award,
-  PieChart,
-  BarChart2,
   Filter,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  Globe,
+  Radio,
+  FileSpreadsheet,
 } from "lucide-react";
 import { AdminStats, WaitlistUserRecord } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -38,13 +41,13 @@ export default function AdminDashboardPage() {
   // Filters
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
-  const [selectedVerified, setSelectedVerified] = useState<string>("all");
-  const [suggestionsSearch, setSuggestionsSearch] = useState<string>("");
+  const [selectedBetaInterest, setSelectedBetaInterest] = useState<string>("all");
 
+  // Response detail modal
   const [activeLead, setActiveLead] = useState<WaitlistUserRecord | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "problems" | "solutions" | "suggestions" | "campaigns" | "leads"
-  >("overview");
+
+  // Active navigation tab
+  const [activeTab, setActiveTab] = useState<"overview" | "users">("overview");
 
   const loadData = useCallback(async (targetPage = page) => {
     setLoading(true);
@@ -57,14 +60,14 @@ export default function AdminDashboardPage() {
       const statsData = await statsRes.json();
       setStats(statsData.stats || statsData);
 
-      // Build query params
+      // Build query params for leads
       const params = new URLSearchParams({
         page: targetPage.toString(),
         limit: "15",
       });
       if (searchTerm) params.append("search", searchTerm);
       if (selectedCountry !== "all") params.append("country", selectedCountry);
-      if (selectedVerified !== "all") params.append("verified", selectedVerified);
+      if (selectedBetaInterest !== "all") params.append("betaInterest", selectedBetaInterest);
 
       const leadsRes = await fetch(`/api/admin/leads?${params.toString()}`);
       if (leadsRes.ok) {
@@ -79,7 +82,7 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, router, searchTerm, selectedCountry, selectedVerified]);
+  }, [page, router, searchTerm, selectedCountry, selectedBetaInterest]);
 
   useEffect(() => {
     loadData(1);
@@ -94,609 +97,497 @@ export default function AdminDashboardPage() {
     window.location.href = "/api/admin/export";
   };
 
+  // Extract unique countries from stats or leads
+  const availableCountries = useMemo(() => {
+    if (!stats?.countryDistribution) return [];
+    return Object.keys(stats.countryDistribution).sort();
+  }, [stats]);
+
+  // Beta interest options
+  const betaOptions = [
+    "Yes, I am interested",
+    "Maybe, depending on the application",
+    "Not right now",
+  ];
+
   return (
-    <div className="min-h-screen bg-[#F6F4ED] text-charcoal">
-      {/* Top Header Bar */}
-      <header className="border-b border-charcoal/10 bg-white/95 sticky top-0 z-40 backdrop-blur-md shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex items-center space-x-2.5">
-              <div className="relative w-7 h-7 shrink-0">
-                <Image
-                  src="/logo-icon.png"
-                  alt="Digital Taqwa"
-                  fill
-                  sizes="28px"
-                  className="object-contain"
-                />
+    <div className="min-h-screen bg-[#0A1410] text-[#F6F4ED] selection:bg-[#B79A62] selection:text-[#0A1410]">
+      {/* Top Navigation Bar */}
+      <header className="border-b border-[#B79A62]/20 bg-[#0D1C15]/90 sticky top-0 z-40 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+          <div className="flex items-center space-x-3.5">
+            <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#B79A62]/40 bg-[#0A1410] p-1 shadow-md">
+              <Image
+                src="/barakah-habits-logo.jpg"
+                alt="Digital Taqwa"
+                fill
+                sizes="36px"
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-display font-black text-base sm:text-lg text-[#F6F4ED] tracking-tight">
+                  DIGITAL TAQWA
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-[#19372D] border border-[#B79A62]/30 text-[10px] font-mono text-[#E8D6AC] uppercase tracking-wider">
+                  Admin Console
+                </span>
               </div>
-              <span className="font-serif text-xl tracking-wider text-forest font-bold">
-                Digital Taqwa
+              <span className="text-[11px] text-[#DDE4D9]/60 font-mono block">
+                Real Database Information Only
               </span>
-            </Link>
-            <span className="text-[10px] uppercase tracking-widest text-[#D6B56D] px-2.5 py-0.5 rounded-full bg-forest font-mono font-medium">
-              Research Dashboard
-            </span>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-3 text-xs">
+          <div className="flex items-center space-x-2.5">
             <button
               onClick={() => loadData(page)}
-              className="p-2 border border-charcoal/15 rounded-xl text-charcoal-muted hover:text-forest transition-colors bg-white shadow-sm"
+              disabled={loading}
               title="Refresh Data"
+              className="p-2.5 rounded-xl border border-white/10 text-[#DDE4D9] hover:text-[#E8D6AC] hover:border-[#B79A62]/40 transition-colors bg-white/5 disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
+
             <button
               onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-forest text-ivory font-semibold uppercase tracking-wider flex items-center space-x-1.5 transition-colors hover:bg-forest-light shadow-sm"
+              className="px-4 py-2 rounded-xl bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-1.5 shadow-md shadow-[#B79A62]/20 hover:scale-105 active:scale-95"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export Research CSV</span>
+              <span className="hidden sm:inline">Export CSV</span>
             </button>
+
+            <Link
+              href="/"
+              target="_blank"
+              className="px-3.5 py-2 rounded-xl border border-white/10 text-[#DDE4D9] hover:text-[#F6F4ED] hover:border-white/25 text-xs font-mono uppercase tracking-wider flex items-center space-x-1.5 bg-white/5 transition-colors"
+            >
+              <span>Live Site</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+
             <button
               onClick={handleLogout}
-              className="px-3 py-2 border border-charcoal/15 rounded-xl text-charcoal-muted hover:text-red-600 uppercase tracking-wider flex items-center space-x-1.5 transition-colors bg-white shadow-sm"
+              title="Sign Out"
+              className="p-2.5 rounded-xl border border-red-500/20 text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-colors"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Logout</span>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
-        </div>
-
-        {/* Tab Navigation Bar */}
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 flex space-x-6 sm:space-x-8 text-xs uppercase tracking-wider border-t border-charcoal/10 font-mono font-medium overflow-x-auto">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "overview"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            01. Audience Overview
-          </button>
-          <button
-            onClick={() => setActiveTab("problems")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "problems"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            02. Problem Analysis
-          </button>
-          <button
-            onClick={() => setActiveTab("solutions")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "solutions"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            03. Desired Product
-          </button>
-          <button
-            onClick={() => setActiveTab("suggestions")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "suggestions"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            04. User Suggestions ({stats?.recentSuggestions?.length || 0})
-          </button>
-          <button
-            onClick={() => setActiveTab("campaigns")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "campaigns"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            05. Campaigns
-          </button>
-          <button
-            onClick={() => setActiveTab("leads")}
-            className={`py-3.5 border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === "leads"
-                ? "border-forest text-forest font-bold"
-                : "border-transparent text-charcoal-muted hover:text-charcoal"
-            }`}
-          >
-            06. Survey Directory ({totalLeads})
-          </button>
         </div>
       </header>
 
-      {/* Main Admin Content Body */}
-      <main className="max-w-7xl mx-auto px-6 sm:px-8 py-8">
-        {/* ========================================================
-            TAB 1: AUDIENCE OVERVIEW
-        ======================================================== */}
-        {activeTab === "overview" && stats && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Top KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="bg-white rounded-3xl p-6 border border-charcoal/10 shadow-sm">
-                <div className="flex items-center justify-between text-charcoal-muted text-xs uppercase tracking-wider mb-2 font-mono">
-                  <span>Total Submissions</span>
-                  <Users className="w-4 h-4 text-forest" />
-                </div>
-                <div className="font-serif text-3xl sm:text-4xl font-bold text-forest">
-                  {stats.totalSignups}
-                </div>
-                <div className="text-xs text-charcoal-subtle mt-1 font-light">
-                  Market survey participants
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 border border-charcoal/10 shadow-sm">
-                <div className="flex items-center justify-between text-charcoal-muted text-xs uppercase tracking-wider mb-2 font-mono">
-                  <span>Verified Emails</span>
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div className="font-serif text-3xl sm:text-4xl font-bold text-emerald-700">
-                  {stats.verifiedEmails}
-                </div>
-                <div className="text-xs text-emerald-700 mt-1 font-medium font-mono">
-                  {stats.verificationRate}% confirmation rate
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 border border-charcoal/10 shadow-sm">
-                <div className="flex items-center justify-between text-charcoal-muted text-xs uppercase tracking-wider mb-2 font-mono">
-                  <span>Beta Testers</span>
-                  <Award className="w-4 h-4 text-[#D6B56D]" />
-                </div>
-                <div className="font-serif text-3xl sm:text-4xl font-bold text-[#B79A62]">
-                  {stats.betaInterestDistribution?.["Yes, I am interested"] || 0}
-                </div>
-                <div className="text-xs text-charcoal-subtle mt-1 font-light">
-                  Ready for future testing
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 border border-charcoal/10 shadow-sm">
-                <div className="flex items-center justify-between text-charcoal-muted text-xs uppercase tracking-wider mb-2 font-mono">
-                  <span>Organic / Paid</span>
-                  <TrendingUp className="w-4 h-4 text-forest" />
-                </div>
-                <div className="font-serif text-2xl sm:text-3xl font-bold text-charcoal">
-                  {stats.organicSignups} <span className="text-sm font-sans text-charcoal-subtle font-normal">/</span> {stats.paidSignups}
-                </div>
-                <div className="text-xs text-charcoal-subtle mt-1 font-light">
-                  Attribution split
-                </div>
-              </div>
-            </div>
-
-            {/* Geographical Distribution & Beta Interest */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Country Breakdown */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Geographical Distribution
-                </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.countryDistribution || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([country, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={country}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal">{country}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-forest rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Beta Testing Interest Breakdown */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Future Beta Testing Interest
-                </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.betaInterestDistribution || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([interest, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={interest}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal">{interest}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-[#D6B56D] rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Navigation Tabs */}
+        <div className="flex items-center space-x-2 border-b border-white/10 pb-3">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center space-x-2 ${
+              activeTab === "overview"
+                ? "bg-[#B79A62] text-[#0A1410] font-bold shadow-md shadow-[#B79A62]/20"
+                : "text-[#DDE4D9]/70 hover:text-[#F6F4ED] hover:bg-white/5"
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Research Overview</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center space-x-2 ${
+              activeTab === "users"
+                ? "bg-[#B79A62] text-[#0A1410] font-bold shadow-md shadow-[#B79A62]/20"
+                : "text-[#DDE4D9]/70 hover:text-[#F6F4ED] hover:bg-white/5"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>User Management ({totalLeads})</span>
+          </button>
+        </div>
 
         {/* ========================================================
-            TAB 2: PROBLEM ANALYSIS
+            TAB 1: RESEARCH OVERVIEW & ANALYTICS
         ======================================================== */}
-        {activeTab === "problems" && stats && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-charcoal/10 gap-2">
-                <div>
-                  <h3 className="font-serif text-2xl font-bold text-forest">
-                    Reported Daily Islamic Challenges
-                  </h3>
-                  <p className="text-xs text-charcoal-muted font-light mt-0.5">
-                    Percentage of surveyed respondents experiencing each obstacle in their daily routine.
-                  </p>
-                </div>
-                <span className="text-xs font-mono text-gold-dark font-semibold">
-                  Sample Size: {stats.totalSignups}
+        {activeTab === "overview" && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* Top Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
+                  Total Waitlist
                 </span>
-              </div>
-
-              <div className="space-y-5">
-                {Object.entries(stats.challengeCounts || {})
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([challenge, count]) => {
-                    const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                    return (
-                      <div key={challenge} className="p-4 rounded-2xl bg-[#FAF9F5] border border-charcoal/5">
-                        <div className="flex items-center justify-between text-xs sm:text-sm mb-1.5">
-                          <span className="font-semibold text-charcoal font-serif">{challenge}</span>
-                          <span className="font-mono text-xs text-forest font-bold">{count} votes ({pct}%)</span>
-                        </div>
-                        <div className="h-2.5 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-forest to-gold-dark rounded-full"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================
-            TAB 3: DESIRED PRODUCT ANALYSIS
-        ======================================================== */}
-        {activeTab === "solutions" && stats && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Desired Solutions / Features */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Most Requested Capabilities
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                    {stats?.totalSignups ?? totalLeads}
+                  </span>
+                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Real Entries</span>
                 </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.solutionInterests || stats.featureInterests || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([solution, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={solution}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal truncate pr-2">{solution}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-forest rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Preferred Product Format */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Preferred Product Experience Format
-                </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.productTypeDistribution || stats.primaryFeatures || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([format, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={format}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal truncate pr-2">{format}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-gold-dark rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-
-            {/* Usage Priorities & Frequency */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Priorities Driving Usage */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Priorities That Would Drive Regular Usage
-                </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.usagePriorityCounts || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([prio, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={prio}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal">{prio}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-forest-light rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Usage Frequency */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-                <div className="text-xs uppercase tracking-widest text-[#B79A62] font-mono font-semibold mb-4">
-                  Expected Realistic Usage Frequency
-                </div>
-                <div className="space-y-4">
-                  {Object.entries(stats.usageFrequencyDistribution || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([freq, count]) => {
-                      const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <div key={freq}>
-                          <div className="flex items-center justify-between text-xs mb-1 font-mono">
-                            <span className="font-semibold text-charcoal">{freq}</span>
-                            <span className="text-charcoal-muted">{count} ({pct}%)</span>
-                          </div>
-                          <div className="h-2 w-full bg-[#EFECE4] rounded-full overflow-hidden">
-                            <div className="h-full bg-[#D6B56D] rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================
-            TAB 4: USER SUGGESTIONS (OPEN-TEXT RESPONSES)
-        ======================================================== */}
-        {activeTab === "suggestions" && stats && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-charcoal/10 gap-3">
-                <div>
-                  <h3 className="font-serif text-2xl font-bold text-forest">
-                    Community Open-Text Ideas &amp; Suggestions
-                  </h3>
-                  <p className="text-xs text-charcoal-muted font-light mt-0.5">
-                    Unfiltered qualitative responses to &ldquo;Tell us what you would like to see&rdquo;.
-                  </p>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={suggestionsSearch}
-                    onChange={(e) => setSuggestionsSearch(e.target.value)}
-                    placeholder="Search responses..."
-                    className="pl-8 pr-3 py-1.5 rounded-xl border border-charcoal/15 text-xs outline-none focus:border-forest w-56 font-mono"
-                  />
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-charcoal-subtle" />
-                </div>
-              </div>
-
-              {(!stats.recentSuggestions || stats.recentSuggestions.length === 0) ? (
-                <div className="py-12 text-center text-charcoal-muted text-xs font-mono">
-                  No open-text suggestions submitted yet. New suggestions appear here automatically.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {stats.recentSuggestions
-                    .filter((s) =>
-                      suggestionsSearch
-                        ? s.suggestion.toLowerCase().includes(suggestionsSearch.toLowerCase()) ||
-                          s.country.toLowerCase().includes(suggestionsSearch.toLowerCase())
-                        : true
-                    )
-                    .map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-2xl bg-[#FAF9F5] border border-charcoal/10 space-y-1.5"
-                      >
-                        <p className="text-sm font-serif italic text-forest leading-relaxed">
-                          &ldquo;{item.suggestion}&rdquo;
-                        </p>
-                        <div className="flex items-center justify-between text-[11px] font-mono text-charcoal-subtle pt-1 border-t border-charcoal/5">
-                          <span>{item.email} &bull; {item.country}</span>
-                          <span>{formatDate(item.date)}</span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================
-            TAB 5: CAMPAIGNS & UTM ATTRIBUTION
-        ======================================================== */}
-        {activeTab === "campaigns" && stats && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-charcoal/10 shadow-sm">
-              <div className="pb-4 mb-6 border-b border-charcoal/10">
-                <h3 className="font-serif text-2xl font-bold text-forest">
-                  Acquisition Channel Performance
-                </h3>
-                <p className="text-xs text-charcoal-muted font-light mt-0.5">
-                  Attribution breakdown across Instagram, YouTube, TikTok, and direct referrals.
+                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
+                  Active community members registered
                 </p>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left font-mono">
-                  <thead>
-                    <tr className="border-b border-charcoal/10 text-charcoal-subtle uppercase">
-                      <th className="py-3 px-4">Source</th>
-                      <th className="py-3 px-4">Campaign</th>
-                      <th className="py-3 px-4 text-center">Submissions</th>
-                      <th className="py-3 px-4 text-center">Verified</th>
-                      <th className="py-3 px-4 text-right">Conversion Share</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-charcoal/5">
-                    {stats.campaignPerformance.map((c, i) => {
-                      const share = Math.round((c.count / (stats.totalSignups || 1)) * 100);
-                      return (
-                        <tr key={i} className="hover:bg-[#FAF9F5]">
-                          <td className="py-3 px-4 font-bold text-forest uppercase">{c.source}</td>
-                          <td className="py-3 px-4 text-charcoal">{c.campaign}</td>
-                          <td className="py-3 px-4 text-center font-bold">{c.count}</td>
-                          <td className="py-3 px-4 text-center text-emerald-700">{c.verifiedCount}</td>
-                          <td className="py-3 px-4 text-right text-charcoal-muted">{share}%</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
+                  Surveys Completed
+                </span>
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                    {stats?.totalSignups ?? totalLeads}
+                  </span>
+                  <span className="text-xs text-emerald-400 font-mono">100% Rate</span>
+                </div>
+                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
+                  All 4 research questions answered
+                </p>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
+                  Beta Testing Interest
+                </span>
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                    {stats?.betaInterestDistribution
+                      ? Object.entries(stats.betaInterestDistribution)
+                          .filter(([k]) => k.toLowerCase().includes("yes"))
+                          .reduce((acc, [, val]) => acc + val, 0)
+                      : 0}
+                  </span>
+                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Ready to test</span>
+                </div>
+                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
+                  Volunteered for pre-launch beta access
+                </p>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
+                  Marketing Opt-In
+                </span>
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                    {stats?.verifiedEmails ?? 0}
+                  </span>
+                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Optional</span>
+                </div>
+                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
+                  Agreed to occasional research updates
+                </p>
+              </div>
+            </div>
+
+            {/* Grid Breakdown: Challenges & Solutions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Question 1: Biggest Challenges */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                      Question 01 Breakdown
+                    </span>
+                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
+                      Top Challenges Faced by Community
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5">
+                  {stats?.challengeCounts && Object.keys(stats.challengeCounts).length > 0 ? (
+                    Object.entries(stats.challengeCounts)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([challenge, count]) => {
+                        const maxVal = Math.max(
+                          ...Object.values(stats.challengeCounts),
+                          1
+                        );
+                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
+                        return (
+                          <div key={challenge} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#DDE4D9] font-medium pr-2">{challenge}</span>
+                              <span className="font-mono text-[#E8D6AC] shrink-0">
+                                {count} votes ({pct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#B79A62] h-full rounded-full transition-all duration-500"
+                                style={{ width: `${(count / maxVal) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No challenge data recorded yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Question 2: Desired Solutions */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                      Question 02 Breakdown
+                    </span>
+                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
+                      What Would Help Most (Desired Solutions)
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5">
+                  {stats?.solutionInterests && Object.keys(stats.solutionInterests).length > 0 ? (
+                    Object.entries(stats.solutionInterests)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([solution, count]) => {
+                        const maxVal = Math.max(
+                          ...Object.values(stats.solutionInterests),
+                          1
+                        );
+                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
+                        return (
+                          <div key={solution} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#DDE4D9] font-medium pr-2">{solution}</span>
+                              <span className="font-mono text-[#E8D6AC] shrink-0">
+                                {count} votes ({pct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-[#B79A62] to-[#E8D6AC] h-full rounded-full transition-all duration-500"
+                                style={{ width: `${(count / maxVal) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No solution data recorded yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Grid Breakdown: Product Types & Beta Interest */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Question 3: Preferred Product Type */}
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Question 03 • Product Format
+                </span>
+                <h3 className="font-display text-base font-bold text-[#F6F4ED]">
+                  Experience Preference
+                </h3>
+                <div className="space-y-2.5">
+                  {stats?.productTypeDistribution && Object.keys(stats.productTypeDistribution).length > 0 ? (
+                    Object.entries(stats.productTypeDistribution)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([prodType, count]) => (
+                        <div
+                          key={prodType}
+                          className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
+                        >
+                          <span className="text-[#DDE4D9] truncate pr-2">{prodType}</span>
+                          <span className="font-mono font-bold text-[#E8D6AC]">{count}</span>
+                        </div>
+                      ))
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/60 italic">No responses yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Question 4: Beta Interest */}
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Question 04 • Beta Testing
+                </span>
+                <h3 className="font-display text-base font-bold text-[#F6F4ED]">
+                  Testing Willingness
+                </h3>
+                <div className="space-y-2.5">
+                  {stats?.betaInterestDistribution && Object.keys(stats.betaInterestDistribution).length > 0 ? (
+                    Object.entries(stats.betaInterestDistribution).map(([opt, count]) => (
+                      <div
+                        key={opt}
+                        className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
+                      >
+                        <span className="text-[#DDE4D9] truncate pr-2">{opt}</span>
+                        <span className="font-mono font-bold text-[#E8D6AC]">{count}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/60 italic">No responses yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Geographic Distribution */}
+              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Geographic Footprint
+                </span>
+                <h3 className="font-display text-base font-bold text-[#F6F4ED]">
+                  Top Countries
+                </h3>
+                <div className="space-y-2.5">
+                  {stats?.countryDistribution && Object.keys(stats.countryDistribution).length > 0 ? (
+                    Object.entries(stats.countryDistribution)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5)
+                      .map(([country, count]) => (
+                        <div
+                          key={country}
+                          className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
+                        >
+                          <span className="text-[#DDE4D9]">{country}</span>
+                          <span className="font-mono font-bold text-[#E8D6AC]">{count}</span>
+                        </div>
+                      ))
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/60 italic">No geographic data yet.</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* ========================================================
-            TAB 6: SURVEY RESPONSES & LEADS DIRECTORY
+            TAB 2: USER MANAGEMENT TABLE
         ======================================================== */}
-        {activeTab === "leads" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+        {activeTab === "users" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
             {/* Filter Bar */}
-            <div className="bg-white rounded-2xl p-4 border border-charcoal/10 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative w-full md:w-80">
+            <div className="p-5 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Search input */}
+              <div className="relative w-full md:w-96">
+                <Search className="w-4 h-4 text-[#DDE4D9]/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by name, email, referral code..."
+                  placeholder="Search by name, email, or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-charcoal/15 text-xs outline-none focus:border-forest bg-[#FAF9F5]"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/40 border border-white/10 text-xs sm:text-sm text-[#F6F4ED] placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
                 />
-                <Search className="w-4 h-4 text-charcoal-subtle absolute left-3 top-2.5" />
               </div>
 
-              <div className="flex items-center space-x-3 w-full md:w-auto">
-                <select
-                  value={selectedCountry}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-charcoal/15 text-xs text-charcoal bg-[#FAF9F5] outline-none"
-                >
-                  <option value="all">All Countries</option>
-                  <option value="Pakistan">Pakistan</option>
-                  <option value="India">India</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="United States">United States</option>
-                  <option value="Other">Other</option>
-                </select>
+              {/* Filter selects */}
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                {/* Country Filter */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-mono text-[#E8D6AC]/80">Country:</span>
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    className="px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-[#F6F4ED] outline-none focus:border-[#B79A62]"
+                  >
+                    <option value="all">All Countries</option>
+                    {availableCountries.map((c) => (
+                      <option key={c} value={c} className="bg-[#0A1410]">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <select
-                  value={selectedVerified}
-                  onChange={(e) => setSelectedVerified(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-charcoal/15 text-xs text-charcoal bg-[#FAF9F5] outline-none"
-                >
-                  <option value="all">Verification Status</option>
-                  <option value="true">Verified Only</option>
-                  <option value="false">Unverified</option>
-                </select>
-
-                <button
-                  onClick={() => loadData(1)}
-                  className="px-4 py-2 rounded-xl bg-forest text-ivory text-xs font-semibold uppercase tracking-wider hover:bg-forest-light"
-                >
-                  Filter
-                </button>
+                {/* Beta Interest Filter */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-mono text-[#E8D6AC]/80">Beta:</span>
+                  <select
+                    value={selectedBetaInterest}
+                    onChange={(e) => setSelectedBetaInterest(e.target.value)}
+                    className="px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-[#F6F4ED] outline-none focus:border-[#B79A62]"
+                  >
+                    <option value="all">All Preferences</option>
+                    {betaOptions.map((b) => (
+                      <option key={b} value={b} className="bg-[#0A1410]">
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-3xl border border-charcoal/10 shadow-sm overflow-hidden">
+            {/* Table Container */}
+            <div className="rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left font-mono">
-                  <thead>
-                    <tr className="border-b border-charcoal/10 text-charcoal-subtle uppercase bg-[#FAF9F5]">
-                      <th className="py-3.5 px-4">Member</th>
-                      <th className="py-3.5 px-4">Country</th>
-                      <th className="py-3.5 px-4">Preferred Format</th>
-                      <th className="py-3.5 px-4">Beta Interest</th>
-                      <th className="py-3.5 px-4">Source</th>
-                      <th className="py-3.5 px-4 text-center">Status</th>
-                      <th className="py-3.5 px-4">Date</th>
-                      <th className="py-3.5 px-4 text-center">Action</th>
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0D1C15] border-b border-[#B79A62]/20 font-mono uppercase tracking-wider text-[#E8D6AC]">
+                    <tr>
+                      <th className="px-5 py-4">User</th>
+                      <th className="px-5 py-4">Country</th>
+                      <th className="px-5 py-4">Beta Interest</th>
+                      <th className="px-5 py-4">Experience Direction</th>
+                      <th className="px-5 py-4">Registered</th>
+                      <th className="px-5 py-4 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-charcoal/5">
-                    {leads.length === 0 ? (
+                  <tbody className="divide-y divide-white/5">
+                    {loading ? (
                       <tr>
-                        <td colSpan={8} className="py-12 text-center text-charcoal-muted">
-                          No matching research responses found.
+                        <td colSpan={6} className="text-center py-12 text-[#DDE4D9]/60 font-mono">
+                          <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#B79A62]" />
+                          Loading real user records...
+                        </td>
+                      </tr>
+                    ) : leads.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-[#DDE4D9]/60 font-mono">
+                          No records match your query.
                         </td>
                       </tr>
                     ) : (
                       leads.map((lead) => (
-                        <tr key={lead.id} className="hover:bg-[#FAF9F5] transition-colors">
-                          <td className="py-3 px-4">
-                            <span className="font-bold text-forest block">{lead.name || "Anonymous"}</span>
-                            <span className="text-charcoal-muted text-[11px]">{lead.email}</span>
-                          </td>
-                          <td className="py-3 px-4">{lead.country}</td>
-                          <td className="py-3 px-4 max-w-[180px] truncate" title={lead.preferred_product_type || lead.primary_feature}>
-                            {lead.preferred_product_type || lead.primary_feature || "General"}
-                          </td>
-                          <td className="py-3 px-4 text-charcoal-subtle text-[11px]">
-                            {lead.beta_interest || "Yes"}
-                          </td>
-                          <td className="py-3 px-4 uppercase text-charcoal-subtle">
-                            {lead.attribution?.utm_source || "direct"}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            {lead.email_verified ? (
-                              <span className="text-emerald-700 font-bold">[VERIFIED]</span>
-                            ) : (
-                              <span className="text-charcoal-subtle">[UNVERIFIED]</span>
+                        <tr
+                          key={lead.id}
+                          className="hover:bg-white/5 transition-colors group"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="font-semibold text-[#F6F4ED] truncate max-w-xs">
+                              {lead.name ? `${lead.name} • ${lead.email}` : lead.email}
+                            </div>
+                            {lead.whatsapp_number && (
+                              <div className="text-[11px] text-[#DDE4D9]/60 font-mono">
+                                WhatsApp: {lead.whatsapp_number}
+                              </div>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-charcoal-subtle text-[11px]">
+                          <td className="px-5 py-4 text-[#DDE4D9] font-mono">
+                            {lead.country}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold ${
+                                lead.beta_interest?.includes("Yes")
+                                  ? "bg-emerald-950/80 border border-emerald-500/40 text-emerald-300"
+                                  : lead.beta_interest?.includes("Maybe")
+                                  ? "bg-amber-950/80 border border-amber-500/40 text-amber-300"
+                                  : "bg-white/5 border border-white/10 text-[#DDE4D9]/70"
+                              }`}
+                            >
+                              {lead.beta_interest || "Interested"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-[#DDE4D9] max-w-xs truncate">
+                            {lead.preferred_product_type || lead.primary_feature || "General"}
+                          </td>
+                          <td className="px-5 py-4 text-[#DDE4D9]/70 font-mono whitespace-nowrap">
                             {formatDate(lead.created_at)}
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="px-5 py-4 text-right">
                             <button
                               onClick={() => setActiveLead(lead)}
-                              className="px-2.5 py-1 rounded-lg border border-charcoal/15 hover:border-forest hover:text-forest text-charcoal-muted transition-colors shadow-sm"
-                              title="View Full Survey Responses"
+                              className="px-3 py-1.5 rounded-xl border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#E8D6AC] bg-white/5 transition-colors inline-flex items-center space-x-1.5 text-xs font-mono"
                             >
                               <Eye className="w-3.5 h-3.5" />
+                              <span>View Response</span>
                             </button>
                           </td>
                         </tr>
@@ -706,21 +597,26 @@ export default function AdminDashboardPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
-              <div className="p-4 border-t border-charcoal/10 flex items-center justify-between text-xs text-charcoal-subtle font-mono">
-                <span>PAGE {page} OF {totalPages} &bull; TOTAL {totalLeads} RESPONSES</span>
+              {/* Pagination Controls */}
+              <div className="p-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-[#DDE4D9]/70">
+                <span>
+                  Showing {leads.length} of {totalLeads} users
+                </span>
                 <div className="flex items-center space-x-2">
                   <button
+                    onClick={() => loadData(Math.max(1, page - 1))}
                     disabled={page <= 1}
-                    onClick={() => loadData(page - 1)}
-                    className="p-1 rounded-lg border border-charcoal/15 text-charcoal-muted hover:text-charcoal disabled:opacity-30"
+                    className="p-2 rounded-xl border border-white/10 hover:border-[#B79A62] disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
+                  <span className="px-2">
+                    Page {page} of {totalPages}
+                  </span>
                   <button
+                    onClick={() => loadData(Math.min(totalPages, page + 1))}
                     disabled={page >= totalPages}
-                    onClick={() => loadData(page + 1)}
-                    className="p-1 rounded-lg border border-charcoal/15 text-charcoal-muted hover:text-charcoal disabled:opacity-30"
+                    className="p-2 rounded-xl border border-white/10 hover:border-[#B79A62] disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -729,126 +625,147 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
-      </main>
 
-      {/* INDIVIDUAL SURVEY RESPONSE DETAIL MODAL */}
-      {activeLead && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-charcoal/15 max-w-xl w-full p-6 sm:p-8 relative text-xs shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setActiveLead(null)}
-              className="absolute top-5 right-5 text-charcoal-subtle hover:text-charcoal"
-              aria-label="Close survey detail"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="border-b border-charcoal/10 pb-4 mb-6">
-              <span className="text-gold-dark font-mono font-bold uppercase block mb-1">
-                [ RESEARCH SURVEY RECORD // {activeLead.referral_code} ]
-              </span>
-              <div className="font-serif text-2xl font-bold text-forest">
-                {activeLead.name || "Anonymous Community Member"}
-              </div>
-              <div className="text-charcoal-muted font-mono">{activeLead.email}</div>
-            </div>
-
-            <div className="space-y-4 font-mono">
-              <div className="grid grid-cols-2 gap-2 p-3.5 rounded-2xl border border-charcoal/10 bg-[#FAF9F5]">
-                <div>Country: <span className="text-charcoal font-bold">{activeLead.country}</span></div>
-                <div>Status: <span className={activeLead.email_verified ? "text-emerald-700 font-bold" : "text-charcoal-subtle"}>{activeLead.email_verified ? "Verified" : "Unverified"}</span></div>
-                <div>WhatsApp: <span className="text-charcoal">{activeLead.whatsapp_number || "None"}</span></div>
-                <div>Beta Interest: <span className="text-forest font-bold">{activeLead.beta_interest || "Yes"}</span></div>
+        {/* ========================================================
+            MODAL: INDIVIDUAL USER RESPONSE VIEW
+        ======================================================== */}
+        {activeLead && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl bg-[#0D1C15] border border-[#B79A62]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6F4ED] max-h-[90vh] overflow-y-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                    Individual Survey Submission
+                  </span>
+                  <h3 className="font-display text-xl sm:text-2xl font-bold text-[#F6F4ED] mt-0.5">
+                    {activeLead.name ? `${activeLead.name}` : "Early Access Participant"}
+                  </h3>
+                  <span className="text-xs font-mono text-[#DDE4D9]/70 block mt-0.5">
+                    {activeLead.email} &bull; Registered {formatDate(activeLead.created_at)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setActiveLead(null)}
+                  className="p-2 rounded-full border border-white/10 hover:border-white/30 text-[#DDE4D9] hover:text-[#F6F4ED] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Preferred Format */}
-              <div>
-                <div className="text-forest font-bold mb-1 uppercase">Preferred Product Format:</div>
-                <div className="p-3 rounded-xl border border-forest/20 text-forest font-serif text-base font-bold bg-forest/5">
-                  {activeLead.preferred_product_type || activeLead.primary_feature || "Not specified"}
+              {/* Contact & Demographics */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-[#DDE4D9]/60 block font-mono">Country</span>
+                  <span className="font-semibold text-[#F6F4ED] mt-0.5 block">{activeLead.country}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-[#DDE4D9]/60 block font-mono">WhatsApp</span>
+                  <span className="font-semibold text-[#F6F4ED] mt-0.5 block">
+                    {activeLead.whatsapp_number || "Not provided"}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-[#DDE4D9]/60 block font-mono">Beta Testing</span>
+                  <span className="font-semibold text-[#E8D6AC] mt-0.5 block">
+                    {activeLead.beta_interest || "Interested"}
+                  </span>
                 </div>
               </div>
 
-              {/* Desired Solutions */}
-              <div>
-                <div className="text-charcoal-subtle mb-1 uppercase font-semibold">
-                  Desired Capabilities ({activeLead.desired_solutions?.length || activeLead.features?.length || 0}):
+              {/* Question 1: Challenges */}
+              <div className="space-y-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Q1: Biggest Challenges
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {activeLead.challenges && activeLead.challenges.length > 0 ? (
+                    activeLead.challenges.map((c) => (
+                      <span
+                        key={c}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[#DDE4D9]"
+                      >
+                        {c}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-[#DDE4D9]/50 italic">None selected</span>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                {activeLead.other_challenge && (
+                  <p className="text-xs text-[#E8D6AC] font-mono mt-1 pl-1">
+                    Other specified: &ldquo;{activeLead.other_challenge}&rdquo;
+                  </p>
+                )}
+              </div>
+
+              {/* Question 2: Desired Solutions */}
+              <div className="space-y-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Q2: Desired Solutions / What Would Help
+                </span>
+                <div className="flex flex-wrap gap-2">
                   {(activeLead.desired_solutions || activeLead.features || []).map((s) => (
-                    <span key={s} className="px-2.5 py-1 rounded-lg border border-charcoal/10 text-charcoal text-[11px] bg-[#FAF9F5]">
+                    <span
+                      key={s}
+                      className="px-3 py-1.5 rounded-xl bg-[#B79A62]/15 border border-[#B79A62]/30 text-xs text-[#E8D6AC]"
+                    >
                       {s}
                     </span>
                   ))}
                 </div>
-              </div>
-
-              {/* Challenges */}
-              <div>
-                <div className="text-charcoal-subtle mb-1 uppercase font-semibold">
-                  Reported Challenges ({activeLead.challenges?.length || 0}):
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(activeLead.challenges || []).map((c) => (
-                    <span key={c} className="px-2.5 py-1 rounded-lg border border-charcoal/10 text-charcoal-muted text-[11px] bg-[#FAF9F5]">
-                      {c}
-                    </span>
-                  ))}
-                  {activeLead.other_challenge && (
-                    <span className="px-2.5 py-1 rounded-lg border border-amber-300 text-amber-900 text-[11px] bg-amber-50">
-                      Other: &ldquo;{activeLead.other_challenge}&rdquo;
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Open Text Suggestion */}
-              {activeLead.user_suggestions && (
-                <div className="p-3.5 rounded-2xl border border-gold-dark/30 bg-[#FAF7F0]">
-                  <div className="text-gold-dark font-bold uppercase mb-1">Qualitative Suggestion:</div>
-                  <p className="font-serif italic text-sm text-forest leading-relaxed">
-                    &ldquo;{activeLead.user_suggestions}&rdquo;
+                {activeLead.user_suggestions && (
+                  <p className="text-xs text-[#DDE4D9] bg-white/5 p-3 rounded-2xl border border-white/5 italic">
+                    User Suggestion: &ldquo;{activeLead.user_suggestions}&rdquo;
                   </p>
+                )}
+              </div>
+
+              {/* Question 3: Preferred Product Type */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Q3: Preferred Digital Experience Direction
+                </span>
+                <p className="text-sm font-semibold text-[#F6F4ED]">
+                  {activeLead.preferred_product_type || activeLead.primary_feature || "Not specified"}
+                </p>
+              </div>
+
+              {/* Question 4: Beta Interest */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
+                  Q4: Beta Testing Participation
+                </span>
+                <p className="text-sm font-semibold text-[#E8D6AC]">
+                  {activeLead.beta_interest || "Yes, I am interested"}
+                </p>
+              </div>
+
+              {/* Attribution Meta */}
+              {activeLead.attribution && (
+                <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5 text-[11px] font-mono text-[#DDE4D9]/60 space-y-1">
+                  <span className="text-[#E8D6AC] block font-semibold">Attribution Metadata:</span>
+                  <div>Source: {activeLead.attribution.utm_source || "direct"}</div>
+                  <div>Medium: {activeLead.attribution.utm_medium || "none"}</div>
+                  <div>Campaign: {activeLead.attribution.utm_campaign || "none"}</div>
+                  {activeLead.attribution.referrer && (
+                    <div>Referrer: {activeLead.attribution.referrer}</div>
+                  )}
                 </div>
               )}
 
-              {/* Usage Priorities & Frequency */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl border border-charcoal/10 bg-[#FAF9F5]">
-                  <div className="text-charcoal-subtle uppercase mb-1 font-bold">Usage Priorities:</div>
-                  <div className="text-xs text-charcoal">
-                    {(activeLead.usage_priorities || []).join(", ") || "Standard"}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-charcoal/10 bg-[#FAF9F5]">
-                  <div className="text-charcoal-subtle uppercase mb-1 font-bold">Expected Frequency:</div>
-                  <div className="text-xs text-charcoal">
-                    {activeLead.expected_usage_frequency || "Not specified"}
-                  </div>
-                </div>
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={() => setActiveLead(null)}
+                  className="px-6 py-2.5 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-colors"
+                >
+                  Close
+                </button>
               </div>
-
-              {/* Attribution */}
-              <div className="p-3 rounded-xl border border-charcoal/10 bg-[#FAF9F5]">
-                <div className="text-charcoal-subtle uppercase mb-1 font-bold">Campaign Attribution:</div>
-                <div>Source: <span className="text-charcoal">{activeLead.attribution?.utm_source || "direct"}</span></div>
-                <div>Campaign: <span className="text-charcoal">{activeLead.attribution?.utm_campaign || "none"}</span></div>
-                <div>Medium: <span className="text-charcoal">{activeLead.attribution?.utm_medium || "none"}</span></div>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-charcoal/10 flex justify-end font-mono">
-              <button
-                onClick={() => setActiveLead(null)}
-                className="px-5 py-2 rounded-full border border-charcoal/20 text-charcoal-muted hover:text-charcoal uppercase text-xs"
-              >
-                Close Record
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }

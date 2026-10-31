@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SURVEY_CHALLENGES,
   SURVEY_DESIRED_SOLUTIONS,
   SURVEY_PRODUCT_TYPES,
-  SURVEY_USAGE_PRIORITIES,
-  SURVEY_USAGE_FREQUENCIES,
   SURVEY_BETA_INTEREST_OPTIONS,
-  SURVEY_COUNTRIES,
   SOCIAL_PROFILES,
 } from "@/lib/constants";
 import {
@@ -24,33 +21,28 @@ import {
   ArrowLeft,
   Copy,
   MessageCircle,
-  Share2,
   AlertCircle,
   Loader2,
-  HelpCircle,
-  Heart,
-  Instagram,
-  Youtube,
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
 
 interface SurveyFormState {
-  // Step 1
+  // Question 1
   challenges: string[];
   other_challenge: string;
-  // Step 2
+  // Question 2
   desired_solutions: string[];
   user_suggestions: string;
-  // Step 3
+  // Question 3
   preferred_product_type: string;
-  // Step 4
-  usage_priorities: string[];
-  expected_usage_frequency: string;
-  // Step 5
-  country: string;
+  // Question 4
+  beta_interest: string;
+  // Step 5: Contact Info
   email: string;
   name: string;
   whatsapp_number: string;
-  beta_interest: string;
+  country: string;
   marketing_consent: boolean;
   honeypot: string;
 }
@@ -71,7 +63,6 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     email: string;
     referralCode: string;
     referralLink: string;
-    devUrl?: string;
   } | null>(null);
 
   const [formData, setFormData] = useState<SurveyFormState>({
@@ -80,13 +71,11 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     desired_solutions: [],
     user_suggestions: "",
     preferred_product_type: "",
-    usage_priorities: [],
-    expected_usage_frequency: "",
-    country: "Pakistan",
+    beta_interest: "Yes, I am interested",
     email: "",
     name: "",
     whatsapp_number: "",
-    beta_interest: "Yes, I am interested",
+    country: "Global",
     marketing_consent: false,
     honeypot: "",
   });
@@ -95,6 +84,10 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     captureAndPersistAttribution();
   }, []);
 
+  useEffect(() => {
+    onStepChange?.(step);
+  }, [step, onStepChange]);
+
   const handleStartInteraction = () => {
     if (!started) {
       setStarted(true);
@@ -102,7 +95,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     }
   };
 
-  // STEP 1: Toggle Challenges
+  // Question 1: Toggle Challenges (Multi-select)
   const toggleChallenge = (item: string) => {
     handleStartInteraction();
     setErrorMessage("");
@@ -117,7 +110,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     });
   };
 
-  // STEP 2: Toggle Desired Solutions
+  // Question 2: Toggle Desired Solutions (Multi-select)
   const toggleSolution = (item: string) => {
     setErrorMessage("");
     setFormData((prev) => {
@@ -131,21 +124,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     });
   };
 
-  // STEP 4: Toggle Usage Priorities
-  const togglePriority = (item: string) => {
-    setErrorMessage("");
-    setFormData((prev) => {
-      const exists = prev.usage_priorities.includes(item);
-      return {
-        ...prev,
-        usage_priorities: exists
-          ? prev.usage_priorities.filter((p) => p !== item)
-          : [...prev.usage_priorities, item],
-      };
-    });
-  };
-
-  // Step 1 Validation -> Next
+  // Step 1 Validation -> Step 2
   const goToStep2 = () => {
     if (formData.challenges.length === 0) {
       setErrorMessage("Please select at least one challenge you currently face.");
@@ -160,10 +139,14 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     setStep(2);
   };
 
-  // Step 2 Validation -> Next
+  // Step 2 Validation -> Step 3
   const goToStep3 = () => {
     if (formData.desired_solutions.length === 0) {
-      setErrorMessage("Please select at least one capability you would want to see.");
+      setErrorMessage("Please select at least one capability that would help you most.");
+      return;
+    }
+    if (formData.desired_solutions.includes("Other") && !formData.user_suggestions.trim()) {
+      setErrorMessage("Please specify your other suggestion, or deselect 'Other'.");
       return;
     }
     setErrorMessage("");
@@ -171,10 +154,10 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     setStep(3);
   };
 
-  // Step 3 Validation -> Next
+  // Step 3 Validation -> Step 4
   const goToStep4 = () => {
     if (!formData.preferred_product_type) {
-      setErrorMessage("Please select what kind of product experience you would prefer.");
+      setErrorMessage("Please select what kind of digital experience you are most interested in.");
       return;
     }
     setErrorMessage("");
@@ -182,33 +165,25 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     setStep(4);
   };
 
-  // Step 4 Validation -> Next
+  // Step 4 Validation -> Step 5
   const goToStep5 = () => {
-    if (formData.usage_priorities.length === 0) {
-      setErrorMessage("Please select at least one priority that would make you use an app regularly.");
-      return;
-    }
-    if (!formData.expected_usage_frequency) {
-      setErrorMessage("Please select how often you realistically expect to use it.");
+    if (!formData.beta_interest) {
+      setErrorMessage("Please choose your beta testing preference.");
       return;
     }
     setErrorMessage("");
-    trackFormStepCompleted(4, "priorities_frequency");
+    trackFormStepCompleted(4, "beta_interest");
     setStep(5);
   };
 
-  // Final Submit
+  // Step 5: Final Submission (Immediate Registration, No Email Verification)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
-    if (!formData.email || !formData.email.includes("@")) {
+    const emailTrimmed = formData.email.trim().toLowerCase();
+    if (!emailTrimmed || !emailTrimmed.includes("@") || !emailTrimmed.includes(".")) {
       setErrorMessage("Please enter a valid email address.");
-      return;
-    }
-
-    if (!formData.country) {
-      setErrorMessage("Please select your country.");
       return;
     }
 
@@ -219,20 +194,18 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
 
       const payload = {
         name: formData.name.trim() || undefined,
-        country: formData.country,
-        email: formData.email.trim().toLowerCase(),
+        country: formData.country || "Global",
+        email: emailTrimmed,
         whatsapp_number: formData.whatsapp_number.trim() || undefined,
-        marketing_consent: formData.marketing_consent,
-        // Research survey responses
+        marketing_consent: Boolean(formData.marketing_consent),
+        // Survey responses
         challenges: formData.challenges,
         other_challenge: formData.other_challenge.trim() || undefined,
         desired_solutions: formData.desired_solutions,
         user_suggestions: formData.user_suggestions.trim() || undefined,
         preferred_product_type: formData.preferred_product_type,
-        usage_priorities: formData.usage_priorities,
-        expected_usage_frequency: formData.expected_usage_frequency,
         beta_interest: formData.beta_interest,
-        // Backward compatibility
+        // Backward compatibility mappings
         features: formData.desired_solutions,
         primary_feature: formData.preferred_product_type,
         honeypot: formData.honeypot || undefined,
@@ -257,7 +230,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
 
       if (!res.ok) {
         if (res.status === 409) {
-          setErrorMessage("This email is already registered on our early access research list.");
+          setErrorMessage("This email is already registered on our early access waitlist.");
         } else {
           setErrorMessage(data.error || "Unable to submit your responses. Please try again.");
         }
@@ -265,32 +238,31 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
         return;
       }
 
-      // Success!
-      trackLead(formData.preferred_product_type || "General", formData.country);
+      // Successful registration
+      trackLead(formData.preferred_product_type || "General", formData.country || "Global");
       const successPayload = {
-        email: data.user?.email || formData.email,
+        email: data.user?.email || emailTrimmed,
         referralCode: data.user?.referral_code || "",
-        referralLink: data.user?.referral_link || `${window.location.origin}/?ref=${data.user?.referral_code}`,
-        devUrl: data.devUrl,
+        referralLink: data.user?.referral_link || `https://digitaltaqwa.site/?ref=${data.user?.referral_code}`,
       };
 
       setSuccessData(successPayload);
-      setStep(6); // Step 6 = Success Screen
+      setStep(6); // Step 6 = Thank-You Confirmation Screen
       onSuccess?.(successPayload);
 
       try {
         const confetti = (await import("canvas-confetti")).default;
         confetti({
-          particleCount: 80,
+          particleCount: 75,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ["#D6B56D", "#19372D", "#F6F4ED"],
+          colors: ["#B79A62", "#19372D", "#F6F4ED", "#E8D6AC"],
         });
       } catch (e) {
-        // Confetti silent fail
+        // Confetti optional
       }
     } catch (err: any) {
-      setErrorMessage("Network error. Please check your connection and retry.");
+      setErrorMessage("Network error. Please check your internet connection and retry.");
     } finally {
       setSubmitting(false);
     }
@@ -304,7 +276,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
   };
 
   return (
-    <div className="bg-[#10221A]/60 backdrop-blur-2xl border border-[#B79A62]/35 rounded-3xl p-6 sm:p-10 md:p-12 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-ivory max-w-3xl mx-auto transition-all">
+    <div className="bg-[#10221A]/75 backdrop-blur-2xl border border-[#B79A62]/35 rounded-3xl p-5 sm:p-8 md:p-11 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-[#F6F4ED] max-w-2xl mx-auto transition-all">
       {/* Bot Honeypot */}
       <input
         type="text"
@@ -317,36 +289,36 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
         aria-hidden="true"
       />
 
-      {/* Progress Bar & Stage Indicator (Steps 1 to 5) */}
+      {/* Progress Bar & Header (Steps 1 to 5) */}
       {step <= 5 && (
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between text-xs font-mono mb-2">
-            <span className="text-[#D6B56D] font-semibold tracking-wider uppercase">
-              {step === 1 && "Step 01 / 05 &bull; Real Challenges"}
-              {step === 2 && "Step 02 / 05 &bull; Desired Capabilities"}
-              {step === 3 && "Step 03 / 05 &bull; Experience Direction"}
-              {step === 4 && "Step 04 / 05 &bull; Priorities & Frequency"}
-              {step === 5 && "Step 05 / 05 &bull; Early Access & Beta"}
+            <span className="text-[#E8D6AC] font-semibold tracking-wider uppercase">
+              {step === 1 && "Step 01 / 05 • Biggest Challenge"}
+              {step === 2 && "Step 02 / 05 • What Would Help Most"}
+              {step === 3 && "Step 03 / 05 • Digital Experience"}
+              {step === 4 && "Step 04 / 05 • Beta Testing"}
+              {step === 5 && "Step 05 / 05 • Join the Waitlist"}
             </span>
-            <span className="text-sage/75">
-              ~{60 - (step - 1) * 12}s left
+            <span className="text-[#DDE4D9]/70">
+              ~{Math.max(10, 45 - (step - 1) * 9)}s
             </span>
           </div>
 
           <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
             <div
-              className="bg-gradient-to-r from-forest-light via-[#D6B56D] to-[#E8D6AC] h-full transition-all duration-300 rounded-full"
+              className="bg-gradient-to-r from-[#19372D] via-[#B79A62] to-[#E8D6AC] h-full transition-all duration-300 rounded-full"
               style={{ width: `${(step / 5) * 100}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Global Error Banner */}
+      {/* Global Error Message */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-6 p-4 rounded-2xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-center space-x-3"
+          className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-red-950/70 border border-red-500/40 text-red-200 text-xs sm:text-sm flex items-center space-x-2.5 animate-shake"
         >
           <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
           <span>{errorMessage}</span>
@@ -354,23 +326,23 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          STEP 1: UNDERSTAND DAILY CHALLENGES
+          QUESTION 1: BIGGEST CHALLENGE (Multiple Select)
       ======================================================== */}
       {step === 1 && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-5 animate-in fade-in duration-300">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#D6B56D] font-semibold block mb-1">
-              Community Market Research
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
+              Question 1 of 4
             </span>
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-ivory">
-              What challenges do you currently face in your daily Islamic routine?
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
+              What is your biggest challenge right now?
             </h3>
-            <p className="text-xs sm:text-sm text-sage/80 font-light mt-1">
-              Select all that apply to you. Your honest feedback dictates what we prioritize.
+            <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
+              Select all that apply to you. Your answers directly shape our product priorities.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 pt-2">
+          <div className="grid grid-cols-1 gap-2.5 pt-1">
             {SURVEY_CHALLENGES.map((item) => {
               const checked = formData.challenges.includes(item);
               return (
@@ -380,15 +352,15 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                   onClick={() => toggleChallenge(item)}
                   className={`text-left p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
                     checked
-                      ? "bg-[#D6B56D]/15 border-[#D6B56D] text-ivory font-medium shadow-sm"
-                      : "bg-white/5 border-white/10 text-sage hover:bg-white/10 hover:border-white/20"
+                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-medium shadow-md shadow-black/20"
+                      : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
                   <span className="leading-snug">{item}</span>
                   <div
                     className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ml-3 transition-colors ${
                       checked
-                        ? "bg-[#D6B56D] border-[#D6B56D] text-[#0E1A14]"
+                        ? "bg-[#B79A62] border-[#B79A62] text-[#0A1410]"
                         : "border-white/30 bg-black/20"
                     }`}
                   >
@@ -401,8 +373,8 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
 
           {/* Optional "Other" input field */}
           {formData.challenges.includes("Other") && (
-            <div className="pt-2 animate-in fade-in duration-200">
-              <label className="block text-xs text-sage mb-1 font-mono">
+            <div className="pt-1 animate-in fade-in duration-200">
+              <label className="block text-xs text-[#E8D6AC] mb-1 font-mono">
                 Please specify your other challenge:
               </label>
               <input
@@ -410,41 +382,42 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 value={formData.other_challenge}
                 onChange={(e) => setFormData({ ...formData, other_challenge: e.target.value })}
                 placeholder="e.g., Struggling to wake up for Tahajjud, lack of accountability..."
-                className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/15 text-ivory text-xs placeholder:text-sage/40 outline-none focus:border-[#D6B56D]"
+                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
               />
             </div>
           )}
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-3 flex justify-end">
             <button
               type="button"
               onClick={goToStep2}
-              className="px-8 py-3.5 rounded-full bg-[#D6B56D] text-[#0E1A14] font-semibold text-xs uppercase tracking-wider hover:bg-[#E8D6AC] transition-all flex items-center space-x-2 shadow-lg shadow-[#D6B56D]/20 hover:shadow-[#D6B56D]/30"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-[#B79A62]/25 hover:scale-105 active:scale-95"
             >
-              <span>Continue &rarr;</span>
+              <span>Continue</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================
-          STEP 2: DISCOVER WHAT USERS ACTUALLY WANT
+          QUESTION 2: WHAT WOULD HELP YOU MOST (Multiple Select)
       ======================================================== */}
       {step === 2 && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-5 animate-in fade-in duration-300">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#D6B56D] font-semibold block mb-1">
-              Explore Research Possibilities
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
+              Question 2 of 4
             </span>
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-ivory">
-              If you could have a digital tool that genuinely helps your Deen, what would you want it to do?
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
+              What would help you most right now?
             </h3>
-            <p className="text-xs sm:text-sm text-sage/80 font-light mt-1">
-              Select all capabilities you would realistically use. These are potential directions, not finalized features.
+            <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
+              Select all solutions that would bring actual value to your Deen.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
             {SURVEY_DESIRED_SOLUTIONS.map((item) => {
               const checked = formData.desired_solutions.includes(item);
               return (
@@ -452,17 +425,17 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                   type="button"
                   key={item}
                   onClick={() => toggleSolution(item)}
-                  className={`text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between text-xs ${
+                  className={`text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
                     checked
-                      ? "bg-[#D6B56D]/15 border-[#D6B56D] text-ivory font-medium"
-                      : "bg-white/5 border-white/10 text-sage hover:bg-white/10"
+                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-medium shadow-md shadow-black/20"
+                      : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
                   <span className="leading-snug pr-2">{item}</span>
                   <div
                     className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                       checked
-                        ? "bg-[#D6B56D] border-[#D6B56D] text-[#0E1A14]"
+                        ? "bg-[#B79A62] border-[#B79A62] text-[#0A1410]"
                         : "border-white/30 bg-black/20"
                     }`}
                   >
@@ -473,25 +446,30 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             })}
           </div>
 
-          {/* Optional open text response */}
-          <div className="pt-2">
-            <label className="block text-xs text-sage mb-1 font-mono">
-              Tell us what you would like to see (Optional):
-            </label>
-            <textarea
-              rows={3}
-              value={formData.user_suggestions}
-              onChange={(e) => setFormData({ ...formData, user_suggestions: e.target.value })}
-              placeholder="What unique feature or nuance would genuinely transform your Islamic lifestyle? Speak freely..."
-              className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/15 text-ivory text-xs placeholder:text-sage/40 outline-none focus:border-[#D6B56D] resize-none"
-            />
-          </div>
+          {/* Optional "Other" input field */}
+          {formData.desired_solutions.includes("Other") && (
+            <div className="pt-1 animate-in fade-in duration-200">
+              <label className="block text-xs text-[#E8D6AC] mb-1 font-mono">
+                Please specify what would help you most:
+              </label>
+              <input
+                type="text"
+                value={formData.user_suggestions}
+                onChange={(e) => setFormData({ ...formData, user_suggestions: e.target.value })}
+                placeholder="e.g. Personalized Quran memorization companion..."
+                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
+              />
+            </div>
+          )}
 
-          <div className="pt-4 flex items-center justify-between">
+          <div className="pt-3 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => setStep(1)}
-              className="px-5 py-2.5 rounded-full border border-white/20 text-sage hover:text-ivory text-xs uppercase tracking-wider flex items-center space-x-1.5"
+              onClick={() => {
+                setErrorMessage("");
+                setStep(1);
+              }}
+              className="px-5 py-3 rounded-full border border-white/20 text-[#DDE4D9]/80 hover:text-[#F6F4ED] text-xs uppercase tracking-wider flex items-center space-x-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -499,32 +477,33 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             <button
               type="button"
               onClick={goToStep3}
-              className="px-8 py-3.5 rounded-full bg-[#D6B56D] text-[#0E1A14] font-semibold text-xs uppercase tracking-wider hover:bg-[#E8D6AC] transition-all flex items-center space-x-2 shadow-lg shadow-[#D6B56D]/20"
+              className="px-8 py-3 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-2 shadow-lg shadow-[#B79A62]/25 hover:scale-105 active:scale-95"
             >
-              <span>Continue &rarr;</span>
+              <span>Continue</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================
-          STEP 3: PRODUCT EXPERIENCE PREFERENCES
+          QUESTION 3: KIND OF DIGITAL EXPERIENCE (Single Select)
       ======================================================== */}
       {step === 3 && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-5 animate-in fade-in duration-300">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#D6B56D] font-semibold block mb-1">
-              Desired Direction
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
+              Question 3 of 4
             </span>
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-ivory">
-              What kind of experience would you prefer?
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
+              What kind of digital experience would you be most interested in?
             </h3>
-            <p className="text-xs sm:text-sm text-sage/80 font-light mt-1">
-              Choose the one format that best matches your personal lifestyle philosophy.
+            <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
+              Choose the one direction that aligns best with what you need.
             </p>
           </div>
 
-          <div className="space-y-2.5 pt-2">
+          <div className="space-y-2.5 pt-1">
             {SURVEY_PRODUCT_TYPES.map((item) => {
               const selected = formData.preferred_product_type === item;
               return (
@@ -537,30 +516,33 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                   }}
                   className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
                     selected
-                      ? "bg-[#D6B56D]/20 border-[#D6B56D] text-ivory font-semibold shadow-md"
-                      : "bg-white/5 border-white/10 text-sage hover:bg-white/10"
+                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-semibold shadow-md shadow-black/20"
+                      : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
                   <span>{item}</span>
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-3 ${
                       selected
-                        ? "border-[#D6B56D] bg-[#D6B56D]"
+                        ? "border-[#B79A62] bg-[#B79A62]"
                         : "border-white/30"
                     }`}
                   >
-                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-[#0E1A14]" />}
+                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-[#0A1410]" />}
                   </div>
                 </button>
               );
             })}
           </div>
 
-          <div className="pt-4 flex items-center justify-between">
+          <div className="pt-3 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => setStep(2)}
-              className="px-5 py-2.5 rounded-full border border-white/20 text-sage hover:text-ivory text-xs uppercase tracking-wider flex items-center space-x-1.5"
+              onClick={() => {
+                setErrorMessage("");
+                setStep(2);
+              }}
+              className="px-5 py-3 rounded-full border border-white/20 text-[#DDE4D9]/80 hover:text-[#F6F4ED] text-xs uppercase tracking-wider flex items-center space-x-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -568,94 +550,72 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             <button
               type="button"
               onClick={goToStep4}
-              className="px-8 py-3.5 rounded-full bg-[#D6B56D] text-[#0E1A14] font-semibold text-xs uppercase tracking-wider hover:bg-[#E8D6AC] transition-all flex items-center space-x-2 shadow-lg shadow-[#D6B56D]/20"
+              className="px-8 py-3 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-2 shadow-lg shadow-[#B79A62]/25 hover:scale-105 active:scale-95"
             >
-              <span>Continue &rarr;</span>
+              <span>Continue</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================
-          STEP 4: PRIORITY & USAGE
+          QUESTION 4: BETA TESTING PARTICIPATION (Single Select)
       ======================================================== */}
       {step === 4 && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-5 animate-in fade-in duration-300">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#D6B56D] font-semibold block mb-1">
-              Usage & Practicality
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
+              Question 4 of 4
             </span>
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-ivory">
-              What would make you use an app like this regularly?
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
+              Would you be interested in beta testing Digital Taqwa before launch?
             </h3>
-            <p className="text-xs sm:text-sm text-sage/80 font-light mt-1">
-              Select all elements that would make you open it daily.
+            <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
+              Beta testers will get early private access and provide direct feedback on early builds.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-            {SURVEY_USAGE_PRIORITIES.map((item) => {
-              const checked = formData.usage_priorities.includes(item);
+          <div className="space-y-2.5 pt-1">
+            {SURVEY_BETA_INTEREST_OPTIONS.map((opt) => {
+              const selected = formData.beta_interest === opt;
               return (
                 <button
                   type="button"
-                  key={item}
-                  onClick={() => togglePriority(item)}
-                  className={`text-left p-3 rounded-2xl border transition-all flex items-center justify-between text-xs ${
-                    checked
-                      ? "bg-[#D6B56D]/15 border-[#D6B56D] text-ivory font-medium"
-                      : "bg-white/5 border-white/10 text-sage hover:bg-white/10"
+                  key={opt}
+                  onClick={() => {
+                    setErrorMessage("");
+                    setFormData({ ...formData, beta_interest: opt });
+                  }}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
+                    selected
+                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-semibold shadow-md shadow-black/20"
+                      : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
-                  <span>{item}</span>
+                  <span>{opt}</span>
                   <div
-                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ml-2 ${
-                      checked
-                        ? "bg-[#D6B56D] border-[#D6B56D] text-[#0E1A14]"
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-3 ${
+                      selected
+                        ? "border-[#B79A62] bg-[#B79A62]"
                         : "border-white/30"
                     }`}
                   >
-                    {checked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-[#0A1410]" />}
                   </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Sub-question: Realistic frequency */}
-          <div className="pt-4 border-t border-white/10">
-            <h4 className="font-display text-lg font-black text-ivory mb-2">
-              How often would you realistically use such an application?
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {SURVEY_USAGE_FREQUENCIES.map((freq) => {
-                const selected = formData.expected_usage_frequency === freq;
-                return (
-                  <button
-                    type="button"
-                    key={freq}
-                    onClick={() => {
-                      setErrorMessage("");
-                      setFormData({ ...formData, expected_usage_frequency: freq });
-                    }}
-                    className={`p-2.5 rounded-xl border text-center text-xs transition-all ${
-                      selected
-                        ? "bg-[#D6B56D] text-[#0E1A14] font-semibold border-[#D6B56D]"
-                        : "bg-white/5 border-white/10 text-sage hover:bg-white/10"
-                    }`}
-                  >
-                    {freq}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-4 flex items-center justify-between">
+          <div className="pt-3 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => setStep(3)}
-              className="px-5 py-2.5 rounded-full border border-white/20 text-sage hover:text-ivory text-xs uppercase tracking-wider flex items-center space-x-1.5"
+              onClick={() => {
+                setErrorMessage("");
+                setStep(3);
+              }}
+              className="px-5 py-3 rounded-full border border-white/20 text-[#DDE4D9]/80 hover:text-[#F6F4ED] text-xs uppercase tracking-wider flex items-center space-x-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -663,75 +623,36 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             <button
               type="button"
               onClick={goToStep5}
-              className="px-8 py-3.5 rounded-full bg-[#D6B56D] text-[#0E1A14] font-semibold text-xs uppercase tracking-wider hover:bg-[#E8D6AC] transition-all flex items-center space-x-2 shadow-lg shadow-[#D6B56D]/20"
+              className="px-8 py-3 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-2 shadow-lg shadow-[#B79A62]/25 hover:scale-105 active:scale-95"
             >
-              <span>Continue &rarr;</span>
+              <span>Continue</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================
-          STEP 5: EARLY ACCESS REGISTRATION & BETA INTEREST
+          STEP 5: CONTACT INFORMATION (Email required, Name/WhatsApp/Consent optional)
       ======================================================== */}
       {step === 5 && (
-        <form onSubmit={handleSubmit} className="space-y-5 animate-in fade-in duration-300">
+        <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-300">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#D6B56D] font-semibold block mb-1">
-              Final Step &bull; Early Access
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
+              Final Step • Early Access
             </span>
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-ivory">
-              Reserve Your Place in the Digital Taqwa Cohort
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
+              Where should we send your early access invite?
             </h3>
-            <p className="text-xs sm:text-sm text-sage/80 font-light mt-1">
-              We never spam or sell data. Your email is strictly used to share research updates and cohort invitations.
+            <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
+              No verification emails or links required. You will be registered on the waitlist immediately.
             </p>
           </div>
 
-          {/* Country Selection */}
+          {/* Email Address (Required) */}
           <div>
-            <label className="block text-xs font-mono uppercase tracking-wider text-sage mb-1.5">
-              Your Country <span className="text-[#D6B56D]">*</span>
-            </label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
-              {["Pakistan", "India", "Other"].map((c) => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => setFormData({ ...formData, country: c })}
-                  className={`p-2 rounded-xl text-xs font-mono border transition-all ${
-                    formData.country === c
-                      ? "bg-[#D6B56D] text-[#0E1A14] font-bold border-[#D6B56D]"
-                      : "bg-white/5 border-white/10 text-sage hover:bg-white/10"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-
-            {formData.country === "Other" && (
-              <select
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-black/40 border border-white/15 text-ivory text-xs outline-none focus:border-[#D6B56D]"
-              >
-                <option value="Other">Select other country...</option>
-                {SURVEY_COUNTRIES.filter((c) => c !== "Pakistan" && c !== "India" && c !== "Other").map(
-                  (c) => (
-                    <option key={c} value={c} className="bg-[#0E1A14]">
-                      {c}
-                    </option>
-                  )
-                )}
-              </select>
-            )}
-          </div>
-
-          {/* Email Address */}
-          <div>
-            <label className="block text-xs font-mono uppercase tracking-wider text-sage mb-1.5">
-              Email Address <span className="text-[#D6B56D]">*</span>
+            <label className="block text-xs font-mono uppercase tracking-wider text-[#E8D6AC] mb-1.5">
+              Email Address <span className="text-[#B79A62]">*</span>
             </label>
             <input
               type="email"
@@ -739,27 +660,27 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="you@example.com"
-              className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-ivory text-sm placeholder:text-sage/40 outline-none focus:border-[#D6B56D]"
+              className="w-full px-4 py-3.5 rounded-2xl bg-black/40 border border-white/15 text-[#F6F4ED] text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62] transition-colors"
             />
           </div>
 
-          {/* Optional Name & WhatsApp */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* First Name & WhatsApp Number (Optional) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-sage mb-1.5">
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#DDE4D9]/70 mb-1.5">
                 First Name (Optional)
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Zaid"
-                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-ivory text-sm placeholder:text-sage/40 outline-none focus:border-[#D6B56D]"
+                placeholder="e.g. Bilal"
+                className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/15 text-[#F6F4ED] text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62] transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-sage mb-1.5">
+              <label className="block text-xs font-mono uppercase tracking-wider text-[#DDE4D9]/70 mb-1.5">
                 WhatsApp Number (Optional)
               </label>
               <input
@@ -767,55 +688,34 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 value={formData.whatsapp_number}
                 onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
                 placeholder="+92 300 1234567"
-                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-ivory text-sm placeholder:text-sage/40 outline-none focus:border-[#D6B56D]"
+                className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/15 text-[#F6F4ED] text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62] transition-colors"
               />
             </div>
           </div>
 
-          {/* Beta Testing Interest Question */}
+          {/* Optional Marketing Consent Checkbox (Unchecked by default) */}
           <div className="pt-2">
-            <label className="block text-xs font-mono uppercase tracking-wider text-[#D6B56D] mb-1.5">
-              Would you like to participate in future beta testing?
-            </label>
-            <div className="space-y-1.5">
-              {SURVEY_BETA_INTEREST_OPTIONS.map((opt) => (
-                <label
-                  key={opt}
-                  className="flex items-center space-x-2.5 p-2 rounded-xl bg-white/5 border border-white/5 text-xs text-sage cursor-pointer hover:bg-white/10"
-                >
-                  <input
-                    type="radio"
-                    name="beta_interest"
-                    checked={formData.beta_interest === opt}
-                    onChange={() => setFormData({ ...formData, beta_interest: opt })}
-                    className="accent-[#D6B56D]"
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Optional Consent (Unchecked by default) */}
-          <div className="pt-1">
-            <label className="flex items-start space-x-2.5 text-xs text-sage/85 cursor-pointer select-none">
+            <label className="flex items-start space-x-3 text-xs text-[#DDE4D9]/85 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={formData.marketing_consent}
                 onChange={(e) => setFormData({ ...formData, marketing_consent: e.target.checked })}
-                className="mt-0.5 rounded accent-[#D6B56D] w-4 h-4 shrink-0"
+                className="mt-0.5 rounded accent-[#B79A62] w-4 h-4 shrink-0 cursor-pointer"
               />
               <span className="leading-relaxed">
-                I agree to receive research updates and occasional project newsletters from Digital Taqwa &amp; Barakah Habits Daily. You can unsubscribe at any time.
+                I would like to receive occasional research updates and project announcements from Digital Taqwa &amp; Barakah Habits Daily. (Optional)
               </span>
             </label>
           </div>
 
-          <div className="pt-4 flex items-center justify-between">
+          <div className="pt-3 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => setStep(4)}
-              className="px-5 py-2.5 rounded-full border border-white/20 text-sage hover:text-ivory text-xs uppercase tracking-wider flex items-center space-x-1.5"
+              onClick={() => {
+                setErrorMessage("");
+                setStep(4);
+              }}
+              className="px-5 py-3 rounded-full border border-white/20 text-[#DDE4D9]/80 hover:text-[#F6F4ED] text-xs uppercase tracking-wider flex items-center space-x-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -823,16 +723,16 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             <button
               type="submit"
               disabled={submitting}
-              className="px-8 py-3.5 rounded-full bg-[#D6B56D] text-[#0E1A14] font-semibold text-xs uppercase tracking-wider hover:bg-[#E8D6AC] transition-all flex items-center space-x-2 shadow-lg shadow-[#D6B56D]/20 disabled:opacity-50"
+              className="px-8 py-3.5 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-2 shadow-lg shadow-[#B79A62]/30 disabled:opacity-50 hover:scale-105 active:scale-95"
             >
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Submitting Survey...</span>
+                  <span>Joining Waitlist...</span>
                 </>
               ) : (
                 <>
-                  <span>Submit Feedback &amp; Join</span>
+                  <span>Join Early Access</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -842,109 +742,102 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          STEP 6: SUCCESS EXPERIENCE
+          STEP 6: CLEAN & POLISHED THANK-YOU PAGE
       ======================================================== */}
-      {step === 6 && successData && (
-        <div className="text-center py-6 space-y-6 animate-in fade-in duration-300">
-          <div className="w-16 h-16 rounded-full bg-[#D6B56D]/20 border border-[#D6B56D]/40 flex items-center justify-center mx-auto text-[#D6B56D]">
-            <Check className="w-8 h-8 stroke-[2.5]" />
+      {step === 6 && (
+        <div className="text-center py-5 sm:py-8 space-y-6 animate-in fade-in duration-300">
+          {/* Simple Success Icon */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#19372D] border-2 border-[#B79A62] flex items-center justify-center mx-auto text-[#E8D6AC] shadow-xl shadow-[#B79A62]/20">
+            <Check className="w-8 h-8 sm:w-10 sm:h-10 stroke-[2.5]" />
           </div>
 
-          <div>
-            <h3 className="font-display text-3xl sm:text-4xl font-black text-ivory">
+          {/* Confirmation Content */}
+          <div className="space-y-2">
+            <h3 className="font-display text-2xl sm:text-4xl font-black text-[#F6F4ED] leading-tight">
               Thank You for Being Part of the Journey.
             </h3>
-            <p className="max-w-md mx-auto text-sm sm:text-base text-sage/90 font-light leading-relaxed mt-2">
-              Digital Taqwa is being shaped by people like you. Your feedback will help us understand what the future application should become.
+            <p className="text-sm sm:text-base text-[#DDE4D9]/90 font-light leading-relaxed max-w-lg mx-auto">
+              Your feedback will help shape the future of Digital Taqwa.
             </p>
-            <p className="text-xs text-[#D6B56D] font-mono mt-1">
-              We will keep you updated as the project develops.
+            <p className="text-xs sm:text-sm text-[#E8D6AC] font-serif italic">
+              Together, we are building something meaningful.
             </p>
           </div>
 
-          {/* Verification Box */}
-          <div className="max-w-md mx-auto p-4 rounded-2xl bg-black/40 border border-white/10 text-left">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-[#D6B56D] font-semibold block mb-1">
-              Priority Placement &bull; Check Your Email
-            </span>
-            <p className="text-xs text-sage/80 leading-relaxed font-light">
-              We have sent a verification email to <strong className="text-ivory font-medium">{successData.email}</strong>. Confirming your email ensures your research responses receive direct weighting.
-            </p>
+          {/* Prominent EXPLORE DIGITAL TAQWA Button */}
+          <div className="pt-2">
+            <a
+              href="https://digitaltaqwa.site"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center justify-center space-x-2 px-9 py-4 rounded-full bg-gradient-to-r from-[#B79A62] via-[#D8C296] to-[#B79A62] text-[#0A1410] font-display text-xs sm:text-sm font-black uppercase tracking-wider shadow-[0_10px_35px_rgba(183,154,98,0.4)] hover:shadow-[0_12px_45px_rgba(183,154,98,0.6)] hover:scale-105 active:scale-95 transition-all duration-300"
+            >
+              <span>EXPLORE DIGITAL TAQWA</span>
+              <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
 
-            {successData.devUrl && (
-              <div className="mt-3 pt-3 border-t border-white/10">
-                <span className="text-[9px] uppercase tracking-wider text-[#D6B56D] block font-mono">
-                  Development Simulation Mode:
-                </span>
-                <a
-                  href={successData.devUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-[#E8D6AC] hover:underline font-mono inline-block mt-0.5"
+            {/* Clickable URL clearly displayed below button */}
+            <div className="mt-3">
+              <a
+                href="https://digitaltaqwa.site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[#E8D6AC]/85 hover:text-[#F6F4ED] underline underline-offset-4 font-mono transition-colors"
+              >
+                https://digitaltaqwa.site
+              </a>
+            </div>
+          </div>
+
+          {/* Optional Referral Link */}
+          {successData?.referralLink && (
+            <div className="max-w-md mx-auto border-t border-white/10 pt-6 mt-6">
+              <span className="text-xs uppercase tracking-widest text-[#E8D6AC] font-mono block mb-2.5">
+                Share With Family &amp; Friends
+              </span>
+
+              <div className="flex items-center space-x-2 bg-black/40 border border-white/15 rounded-2xl p-2 mb-3">
+                <input
+                  type="text"
+                  readOnly
+                  value={successData.referralLink}
+                  className="bg-transparent text-xs text-[#DDE4D9] flex-1 outline-none px-2 truncate select-all font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={copyReferralLink}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#B79A62] text-[#0A1410] text-xs font-bold flex items-center space-x-1 hover:bg-[#D8C296] transition-colors"
                 >
-                  1-Click Simulate Email Verification &rarr;
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-2.5">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    "Assalamu Alaikum! I just joined the early access waitlist for Digital Taqwa — an intentional Islamic companion by Barakah Habits Daily: " +
+                      successData.referralLink
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl border border-white/15 hover:border-[#B79A62] text-xs text-[#DDE4D9] hover:text-[#F6F4ED] flex items-center space-x-2 transition-colors bg-white/5"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Share on WhatsApp</span>
                 </a>
               </div>
-            )}
-          </div>
-
-          {/* Share Referral Link with Community */}
-          <div className="max-w-md mx-auto border-t border-white/10 pt-6">
-            <span className="text-xs uppercase tracking-widest text-sage font-mono block mb-3">
-              Invite Family &amp; Friends to Shape Digital Taqwa
-            </span>
-
-            <div className="flex items-center space-x-2 bg-black/40 border border-white/15 rounded-xl p-2 mb-4">
-              <input
-                type="text"
-                readOnly
-                value={successData.referralLink}
-                className="bg-transparent text-xs text-sage flex-1 outline-none px-2 truncate select-all font-mono"
-              />
-              <button
-                type="button"
-                onClick={copyReferralLink}
-                className="px-3.5 py-1.5 rounded-lg bg-[#D6B56D] text-[#0E1A14] text-xs font-semibold flex items-center space-x-1"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
             </div>
-
-            <div className="flex items-center justify-center space-x-3">
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(
-                  "Assalamu Alaikum! I just took part in the community research survey for Digital Taqwa — a proposed companion by Barakah Habits Daily to help Muslims build consistent Islamic habits and reduce screen time. Share your thoughts here: " +
-                    successData.referralLink
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl border border-white/15 hover:border-[#D6B56D] text-xs text-sage hover:text-ivory flex items-center space-x-2 transition-colors bg-white/5"
-              >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span>WhatsApp</span>
-              </a>
-
-              <a
-                href={SOCIAL_PROFILES.instagram.url}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl border border-white/15 hover:border-[#D6B56D] text-xs text-sage hover:text-ivory flex items-center space-x-2 transition-colors bg-white/5"
-              >
-                <Instagram className="w-4 h-4 text-pink-400" />
-                <span>Follow on Instagram</span>
-              </a>
-            </div>
-          </div>
+          )}
 
           <div className="pt-2">
             <button
@@ -952,9 +845,9 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="text-xs text-sage/70 hover:text-ivory uppercase tracking-wider font-mono transition-colors"
+              className="text-xs text-[#DDE4D9]/60 hover:text-[#F6F4ED] uppercase tracking-wider font-mono transition-colors"
             >
-              &uarr; Return to Homepage
+              ↑ Return to Homepage
             </button>
           </div>
         </div>

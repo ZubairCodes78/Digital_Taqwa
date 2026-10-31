@@ -128,9 +128,8 @@ async function runQA() {
     record("9. Admin CSV Export", false, e.message);
   }
 
-  // 10. Waitlist Registration API with attribution & segmentation
+  // 10. Waitlist Registration API with immediate registration (no verification email needed)
   const testEmail = `qa_${Date.now()}@example.com`;
-  let verificationToken = null;
   try {
     const payload = {
       name: "Bilal QA",
@@ -138,13 +137,10 @@ async function runQA() {
       email: testEmail,
       whatsapp_number: "+923001112233",
       marketing_consent: true,
-      challenges: ["Difficulty staying consistent with Islamic habits", "Excessive mobile usage and social media scrolling"],
-      desired_solutions: ["Help me build consistent Islamic daily habits", "Help me reduce digital distractions"],
-      preferred_product_type: "A complete Islamic lifestyle companion",
-      usage_priorities: ["Simple and easy to use", "Useful daily reminders"],
-      expected_usage_frequency: "Multiple times a day",
+      challenges: ["Building consistent daily Islamic habits", "Excessive screen time & digital distractions"],
+      desired_solutions: ["Structured Islamic habit building", "Reducing digital distractions & screen time"],
+      preferred_product_type: "Islamic lifestyle companion",
       beta_interest: "Yes, I am interested",
-      user_suggestions: "Make sure there are no ads or invasive tracking.",
       utm_source: "instagram",
       utm_medium: "paid_ad",
       utm_campaign: "launch_2026",
@@ -157,27 +153,33 @@ async function runQA() {
     });
     const data = await res.json();
     const ok = res.status === 201 && data.success && data.user && data.user.referral_code;
-    if (data.devUrl) {
-      const match = data.devUrl.match(/token=([a-f0-9]+)/);
-      if (match) verificationToken = match[1];
-    }
-    record("10. Waitlist Registration creates user, referral code & attribution", ok, `Status: ${res.status}`);
+    record("10. Waitlist Registration creates user & referral code immediately", ok, `Status: ${res.status}`);
   } catch (e) {
     record("10. Waitlist Registration", false, e.message);
   }
 
-  // 11. Email Verification Endpoint
+  // 11. Optional Marketing Consent Verification (can register with marketing_consent: false)
   try {
-    if (!verificationToken) {
-      record("11. Email Verification token extracted", false, "No token found from step 10");
-    } else {
-      const res = await fetch(`${BASE_URL}/api/verify?token=${verificationToken}`);
-      const data = await res.json();
-      const ok = res.status === 200 && data.success && data.email === testEmail;
-      record("11. Email Verification marks user as verified", ok, `Status: ${res.status}`);
-    }
+    const optionalConsentEmail = `qa_optional_${Date.now()}@example.com`;
+    const payload = {
+      country: "Global",
+      email: optionalConsentEmail,
+      marketing_consent: false,
+      challenges: ["Building consistent daily Islamic habits"],
+      desired_solutions: ["Structured Islamic habit building"],
+      preferred_product_type: "Islamic lifestyle companion",
+      beta_interest: "Maybe, depending on the application",
+    };
+    const res = await fetch(`${BASE_URL}/api/waitlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    const ok = res.status === 201 && data.success && data.user && data.user.referral_code;
+    record("11. Waitlist Registration allows optional marketing consent (false)", ok, `Status: ${res.status}`);
   } catch (e) {
-    record("11. Email Verification", false, e.message);
+    record("11. Optional Marketing Consent", false, e.message);
   }
 
   // 12. Duplicate Email Prevention

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { completeWaitlistSchema } from "@/lib/validation";
 import { createWaitlistUser } from "@/lib/db";
-import { sendVerificationEmail } from "@/lib/email";
 
 // Simple IP in-memory rate limiting
 const ipRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -46,30 +45,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
-    // Save lead to database
-    const { user, verificationToken } = await createWaitlistUser(validatedData.data);
+    // Save lead to database (directly registered and verified - no email verification required)
+    const { user } = await createWaitlistUser(validatedData.data);
 
-    // Send verification email
-    const emailResult = await sendVerificationEmail({
-      toEmail: user.email,
-      name: user.name,
-      verificationToken,
-    });
-
-    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://digitaltaqwa.site";
     const referralLink = `${origin}/?ref=${user.referral_code}`;
 
     return NextResponse.json(
       {
         success: true,
-        message: "You're on the list! Please check your email to verify your spot.",
+        message: "Thank you for being part of the journey. Your response has been received.",
         user: {
           id: user.id,
           email: user.email,
           referral_code: user.referral_code,
           referral_link: referralLink,
         },
-        devUrl: emailResult.devUrl, // Available in dev mode for 1-click verification testing
       },
       { status: 201 }
     );
@@ -88,4 +79,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
