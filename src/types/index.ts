@@ -44,7 +44,10 @@ export interface WaitlistUserRecord {
   marketing_consent: boolean;
   verification_token?: string;
   verification_token_expires?: string;
+  verified_at?: string;
   referral_code: string;
+  referred_by?: string;
+  referral_count?: number;
   created_at: string;
   updated_at: string;
   // Research Survey Data
@@ -56,6 +59,7 @@ export interface WaitlistUserRecord {
   usage_priorities?: string[];
   expected_usage_frequency?: string;
   beta_interest?: string;
+  device_platform?: string;
   // Backward compatibility
   features?: string[];
   primary_feature?: string;

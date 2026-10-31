@@ -5,6 +5,7 @@ import { supabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { CompleteWaitlistInput } from "./validation";
 import { WaitlistUserRecord, AdminStats } from "@/types";
 import { generateReferralCode } from "./utils";
+import { saveRecordToSqlite, loadAllRecordsFromSqlite } from "./sqliteDb";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "leads.json");
@@ -173,8 +174,16 @@ function ensureDataDir() {
 function readLocalLeads(): WaitlistUserRecord[] {
   ensureDataDir();
   try {
+    const sqliteRecords = loadAllRecordsFromSqlite();
+    if (sqliteRecords && sqliteRecords.length > 0) {
+      return sqliteRecords;
+    }
     const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(raw);
+    const leads: WaitlistUserRecord[] = JSON.parse(raw);
+    for (const lead of leads) {
+      saveRecordToSqlite(lead);
+    }
+    return leads;
   } catch (err) {
     console.error("Error reading local leads:", err);
     return [];
@@ -184,6 +193,9 @@ function readLocalLeads(): WaitlistUserRecord[] {
 function writeLocalLeads(leads: WaitlistUserRecord[]) {
   ensureDataDir();
   fs.writeFileSync(DATA_FILE, JSON.stringify(leads, null, 2), "utf-8");
+  for (const lead of leads) {
+    saveRecordToSqlite(lead);
+  }
 }
 
 /**
