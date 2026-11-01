@@ -27,6 +27,8 @@ export function AmbientQuranAudio() {
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
 
   const hasUserPausedManually = useRef<boolean>(false);
+  const wasPlayingBeforeTabSwitch = useRef<boolean>(false);
+  const isAutoPausedByTabSwitch = useRef<boolean>(false);
   const currentTrackIndexRef = useRef<number>(0);
   const isTransitioningRef = useRef<boolean>(false);
 
@@ -151,13 +153,14 @@ export function AmbientQuranAudio() {
               // Video ended -> transition to next track in loop without showing player
               handleTrackEnded();
             } else if (state === 1) {
-              // Recitation successfully started -> trigger smooth fade out
+              // Recitation successfully playing -> trigger smooth fade out
               setIsPlaying(true);
               setAutoplayBlocked(false);
               setShowPopover(false);
+              isAutoPausedByTabSwitch.current = false;
             } else if (state === 2) {
-              // Only consider paused if not in between track switch
-              if (!isTransitioningRef.current) {
+              // Only consider paused if not in between track switch and not auto-paused by tab switch
+              if (!isTransitioningRef.current && !isAutoPausedByTabSwitch.current) {
                 setIsPlaying(false);
               }
             }
@@ -196,9 +199,92 @@ export function AmbientQuranAudio() {
     };
   }, [isApiReady, isAdmin, handleTrackEnded]);
 
+  // Page Visibility & Window Focus Lifecycle
+  // Pause playback immediately when tab is switched away or window loses focus.
+  // Resume from the exact paused position when returning, provided user didn't manually pause.
+  useEffect(() => {
+    if (isAdmin) return;
+
+    const handleVisibilityChange = () => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      if (document.visibilityState === "hidden") {
+        // Tab is hidden / switched away
+        if (isPlaying) {
+          wasPlayingBeforeTabSwitch.current = true;
+          isAutoPausedByTabSwitch.current = true;
+          try {
+            if (typeof player.pauseVideo === "function") {
+              player.pauseVideo();
+            }
+          } catch (e) {}
+          setIsPlaying(false);
+        }
+      } else if (document.visibilityState === "visible") {
+        // Tab is active / returned to
+        if (wasPlayingBeforeTabSwitch.current && !hasUserPausedManually.current) {
+          wasPlayingBeforeTabSwitch.current = false;
+          isAutoPausedByTabSwitch.current = false;
+          try {
+            if (typeof player.playVideo === "function") {
+              player.playVideo();
+            }
+          } catch (e) {}
+          setIsPlaying(true);
+        } else {
+          isAutoPausedByTabSwitch.current = false;
+        }
+      }
+    };
+
+    const handleWindowBlur = () => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      // When window loses focus completely (e.g., switched application)
+      if (isPlaying && !document.hasFocus()) {
+        wasPlayingBeforeTabSwitch.current = true;
+        isAutoPausedByTabSwitch.current = true;
+        try {
+          if (typeof player.pauseVideo === "function") {
+            player.pauseVideo();
+          }
+        } catch (e) {}
+        setIsPlaying(false);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      // When window regains focus
+      if (wasPlayingBeforeTabSwitch.current && !hasUserPausedManually.current) {
+        wasPlayingBeforeTabSwitch.current = false;
+        isAutoPausedByTabSwitch.current = false;
+        try {
+          if (typeof player.playVideo === "function") {
+            player.playVideo();
+          }
+        } catch (e) {}
+        setIsPlaying(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [isAdmin, isPlaying]);
+
   // Page Lifecycle & Unload Management
   // When visitor closes the tab, closes the browser, or navigates away, stop playback & release player.
-  // Note: Tab switching does NOT stop playback, preserving peaceful recitation while tab remains open.
   useEffect(() => {
     if (isAdmin) return;
 
@@ -243,8 +329,12 @@ export function AmbientQuranAudio() {
       if (typeof player.pauseVideo === "function") player.pauseVideo();
       setIsPlaying(false);
       hasUserPausedManually.current = true;
+      wasPlayingBeforeTabSwitch.current = false;
+      isAutoPausedByTabSwitch.current = false;
     } else {
       hasUserPausedManually.current = false;
+      wasPlayingBeforeTabSwitch.current = false;
+      isAutoPausedByTabSwitch.current = false;
       if (typeof player.unMute === "function") player.unMute();
       if (typeof player.playVideo === "function") player.playVideo();
       setIsPlaying(true);
@@ -274,9 +364,13 @@ export function AmbientQuranAudio() {
 
   if (isAdmin) return null;
 
-  // The player UI is visible while audio is loading or pending, or if paused/failed.
+  // The player UI is visible while audio is loading or pending, or if manually paused / autoplay blocked.
+  // When automatically paused due to tab switch, the player does NOT abruptly show up.
   // As soon as recitation is playing, it smoothly fades out and completely hides.
-  const isPlayerUIVisible = !isPlaying || autoplayBlocked;
+  const isPlayerUIVisible =
+    (!isPlaying && !isAutoPausedByTabSwitch.current) ||
+    autoplayBlocked ||
+    hasUserPausedManually.current;
 
   return (
     <>
@@ -301,7 +395,7 @@ export function AmbientQuranAudio() {
       {/* 
         Floating Circular Player UI Container
         Smooth, subtle fade out and complete hide when playback successfully starts.
-        Fades back in if playback is paused or blocked by browser.
+        Fades back in if playback is manually paused or blocked by browser.
       */}
       <div
         ref={containerRef}

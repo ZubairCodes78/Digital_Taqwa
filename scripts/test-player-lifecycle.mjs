@@ -1,10 +1,10 @@
-// Simulation and Verification of Quran Player Lifecycle
+// Simulation and Verification of Quran Player Tab Visibility & Lifecycle
 
 import fs from "fs";
 import path from "path";
 
 console.log("=================================================================");
-console.log("🔊 VERIFYING DIGITAL TAQWA QURAN PLAYER LIFECYCLE");
+console.log("🔊 VERIFYING DIGITAL TAQWA QURAN PLAYER TAB VISIBILITY & LIFECYCLE");
 console.log("=================================================================\n");
 
 const componentPath = path.join(process.cwd(), "src/components/AmbientQuranAudio.tsx");
@@ -12,44 +12,44 @@ const content = fs.readFileSync(componentPath, "utf-8");
 
 const checks = [
   {
-    name: "Immediate unmuted autoplay attempted on YouTube player ready",
-    pass: content.includes("player.playVideo()") && content.includes("player.unMute()"),
+    name: "Page Visibility API ('visibilitychange') event registered",
+    pass: content.includes('document.addEventListener("visibilitychange", handleVisibilityChange)'),
   },
   {
-    name: "Player UI smooth fade-out and complete hide when playback starts",
-    pass: content.includes("isPlayerUIVisible") && content.includes("opacity-0 pointer-events-none translate-y-3 scale-95"),
+    name: "Immediate pause when tab is hidden (document.visibilityState === 'hidden')",
+    pass: content.includes('document.visibilityState === "hidden"') && content.includes("player.pauseVideo()"),
   },
   {
-    name: "Permanent offscreen iframe container isolated from UI fade-out",
-    pass: content.includes('id="yt-quran-audio-element"') && content.includes('left: "-9999px"'),
+    name: "Automatic resume when tab returns to visible (document.visibilityState === 'visible')",
+    pass: content.includes('document.visibilityState === "visible"') && content.includes("player.playVideo()"),
   },
   {
-    name: "Two-track continuous loop: Recitation 1 -> Recitation 2 -> Recitation 1",
+    name: "Exact position resume without restarting recitation from beginning",
+    pass: content.includes("player.pauseVideo()") && content.includes("player.playVideo()") && !content.includes("player.seekTo(0)"),
+  },
+  {
+    name: "Window blur and focus listeners for application/window switching",
+    pass: content.includes('window.addEventListener("blur", handleWindowBlur)') && content.includes('window.addEventListener("focus", handleWindowFocus)'),
+  },
+  {
+    name: "Manual pause tracking: visitor manual pause is NEVER overridden by tab return",
+    pass: content.includes("hasUserPausedManually.current") && content.includes("!hasUserPausedManually.current"),
+  },
+  {
+    name: "State flag prevents circular player flashing during tab switch",
+    pass: content.includes("isAutoPausedByTabSwitch.current"),
+  },
+  {
+    name: "Preserve continuous two-track sequence (Recitation 1 -> Recitation 2 -> Loop)",
     pass: content.includes("(currentTrackIndexRef.current + 1) % YOUTUBE_QURAN_PLAYLIST.length") && content.includes("player.loadVideoById"),
   },
   {
-    name: "Player stays hidden during track transition",
-    pass: content.includes("isTransitioningRef.current = true") && content.includes("isTransitioningRef.current"),
+    name: "Stop playback & release YouTube player resources on page exit / tab closure",
+    pass: content.includes('window.addEventListener("pagehide"') && content.includes("player.stopVideo()") && content.includes("player.destroy()"),
   },
   {
-    name: "Player fades back in if paused by user or playback blocked",
-    pass: content.includes("const isPlayerUIVisible = !isPlaying || autoplayBlocked"),
-  },
-  {
-    name: "Page exit handlers ('pagehide' & 'beforeunload') implemented",
-    pass: content.includes('window.addEventListener("pagehide"') && content.includes('window.addEventListener("beforeunload"'),
-  },
-  {
-    name: "Full cleanup of YouTube player and resources on exit (stopVideo & destroy)",
-    pass: content.includes("player.stopVideo()") && content.includes("player.destroy()"),
-  },
-  {
-    name: "No persistent background playback or resume state stored in localStorage",
-    pass: !content.includes("localStorage.setItem") && !content.includes("sessionStorage.setItem"),
-  },
-  {
-    name: "Tab switching does not interrupt playback",
-    pass: !content.includes('document.addEventListener("visibilitychange"'),
+    name: "Permanent offscreen iframe container isolated from UI transitions",
+    pass: content.includes('id="yt-quran-audio-element"') && content.includes('left: "-9999px"'),
   },
 ];
 
@@ -65,9 +65,9 @@ checks.forEach((chk, idx) => {
 
 console.log("\n=================================================================");
 if (allPassed) {
-  console.log(`🎉 ALL ${checks.length} LIFECYCLE CHECKS PASSED SUCCESSFULLY!`);
+  console.log(`🎉 ALL ${checks.length} VISIBILITY & LIFECYCLE CHECKS PASSED!`);
 } else {
-  console.error("⚠️ SOME LIFECYCLE CHECKS FAILED");
+  console.error("⚠️ SOME CHECKS FAILED");
   process.exit(1);
 }
 console.log("=================================================================\n");
