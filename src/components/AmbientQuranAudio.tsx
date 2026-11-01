@@ -37,7 +37,25 @@ export function AmbientQuranAudio() {
 
   const currentTrack = YOUTUBE_QURAN_PLAYLIST[currentTrackIndex];
 
-  // Load YouTube IFrame Player API
+  // Stop and release all audio & YouTube resources when page unloads or visitor leaves
+  const releaseAudioResources = useCallback(() => {
+    try {
+      const player = playerRef.current;
+      if (player) {
+        if (typeof player.stopVideo === "function") {
+          player.stopVideo();
+        }
+        if (typeof player.destroy === "function") {
+          player.destroy();
+        }
+        playerRef.current = null;
+      }
+    } catch (e) {
+      // Ignore teardown exceptions during page unload
+    }
+  }, []);
+
+  // Load YouTube IFrame Player API (client-side only, non-admin)
   useEffect(() => {
     if (isAdmin) return;
 
@@ -177,6 +195,28 @@ export function AmbientQuranAudio() {
       window.removeEventListener("keydown", handleFirstUserInteraction);
     };
   }, [isApiReady, isAdmin, handleTrackEnded]);
+
+  // Page Lifecycle & Unload Management
+  // When visitor closes the tab, closes the browser, or navigates away, stop playback & release player.
+  // Note: Tab switching does NOT stop playback, preserving peaceful recitation while tab remains open.
+  useEffect(() => {
+    if (isAdmin) return;
+
+    const handlePageExit = () => {
+      releaseAudioResources();
+    };
+
+    // 'pagehide' handles modern mobile & desktop tab closures, document navigation away
+    window.addEventListener("pagehide", handlePageExit);
+    // 'beforeunload' handles page refreshes and window closing
+    window.addEventListener("beforeunload", handlePageExit);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageExit);
+      window.removeEventListener("beforeunload", handlePageExit);
+      releaseAudioResources();
+    };
+  }, [isAdmin, releaseAudioResources]);
 
   // Close popover when clicking outside
   useEffect(() => {
