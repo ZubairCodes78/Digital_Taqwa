@@ -14,17 +14,22 @@ import {
   Eye,
   X,
   Users,
-  CheckCircle,
-  TrendingUp,
   ExternalLink,
   MessageSquare,
   Sparkles,
   Quote,
-  ShieldAlert,
+  ShieldCheck,
   Compass,
+  Sliders,
+  Database,
+  Lock,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react";
 import { AdminStats, WaitlistUserRecord } from "@/types";
 import { formatDate } from "@/lib/utils";
+
+type AdminTab = "overview" | "responses" | "insights" | "settings";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -40,11 +45,11 @@ export default function AdminDashboardPage() {
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [selectedBetaInterest, setSelectedBetaInterest] = useState<string>("all");
 
-  // Response detail modal
+  // Active user detail drawer / modal
   const [activeLead, setActiveLead] = useState<WaitlistUserRecord | null>(null);
 
-  // Active navigation tab
-  const [activeTab, setActiveTab] = useState<"overview" | "reflections" | "users">("overview");
+  // 4 Core Navigation Tabs
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
 
   const loadData = useCallback(async (targetPage = page) => {
     setLoading(true);
@@ -94,610 +99,343 @@ export default function AdminDashboardPage() {
     window.location.href = "/api/admin/export";
   };
 
-  // Extract unique countries from stats
+  // Available countries from real responses
   const availableCountries = useMemo(() => {
     if (!stats?.countryDistribution) return [];
     return Object.keys(stats.countryDistribution).sort();
   }, [stats]);
 
-  // Beta interest options
-  const betaOptions = [
-    "Yes, I would love to test early concepts and provide feedback",
-    "Maybe, depending on what you build",
-    "Not right now, just notify me when you launch",
-  ];
+  // Recent 5 leads for Overview
+  const recentLeads = useMemo(() => {
+    return leads.slice(0, 5);
+  }, [leads]);
 
   return (
-    <div className="min-h-screen bg-[#0A1410] text-[#F6F4ED] selection:bg-[#B79A62] selection:text-[#0A1410]">
-      {/* Top Navigation Bar */}
-      <header className="border-b border-[#B79A62]/20 bg-[#0D1C15]/90 sticky top-0 z-40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-          <div className="flex items-center space-x-3.5">
-            <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#B79A62]/40 bg-[#0A1410] p-1 shadow-md">
+    <div className="min-h-screen bg-[#060D09] text-[#F6F4ED] selection:bg-[#B79A62] selection:text-[#060D09] relative overflow-x-hidden">
+      {/* Subtle ambient lighting */}
+      <div className="fixed top-0 left-1/4 w-[600px] h-[350px] bg-[#B79A62]/[0.03] rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-[500px] h-[350px] bg-[#142A1E]/30 rounded-full blur-[140px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <header className="border-b border-white/[0.06] bg-[#0A140E]/80 backdrop-blur-xl sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          {/* Brand */}
+          <div className="flex items-center space-x-3">
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-[#B79A62]/30 bg-[#060D09] p-0.5">
               <Image
                 src="/barakah-habits-logo.jpg"
                 alt="Digital Taqwa"
                 fill
-                sizes="36px"
-                className="object-cover"
+                sizes="32px"
+                className="object-cover rounded-md"
               />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-display font-black text-base sm:text-lg text-[#F6F4ED] tracking-tight">
+                <span className="font-display font-medium text-sm sm:text-base text-[#F6F4ED] tracking-wide">
                   DIGITAL TAQWA
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#19372D] border border-[#B79A62]/30 text-[10px] font-mono text-[#E8D6AC] uppercase tracking-wider">
-                  Research Dashboard
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-[#E8D6AC] border border-[#B79A62]/25">
+                  Research
                 </span>
               </div>
-              <span className="text-[11px] text-[#DDE4D9]/60 font-mono block">
-                Human-Centered Insights • Real Database Entries
-              </span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          {/* Quick Header Actions */}
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => loadData(page)}
               disabled={loading}
               title="Refresh Data"
-              className="p-2.5 rounded-xl border border-white/10 text-[#DDE4D9] hover:text-[#E8D6AC] hover:border-[#B79A62]/40 transition-colors bg-white/5 disabled:opacity-50"
+              className="p-2 rounded-xl text-[#DDE4D9]/70 hover:text-[#E8D6AC] hover:bg-white/[0.04] transition-colors border border-transparent hover:border-white/[0.08]"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            </button>
-
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-1.5 shadow-md shadow-[#B79A62]/20 hover:scale-105 active:scale-95"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export CSV</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
 
             <Link
               href="/"
               target="_blank"
-              className="px-3.5 py-2 rounded-xl border border-white/10 text-[#DDE4D9] hover:text-[#F6F4ED] hover:border-white/25 text-xs font-mono uppercase tracking-wider flex items-center space-x-1.5 bg-white/5 transition-colors"
+              className="px-3 py-1.5 rounded-xl border border-white/[0.08] text-[#DDE4D9]/80 hover:text-[#F6F4ED] hover:bg-white/[0.04] text-xs font-mono transition-colors inline-flex items-center space-x-1.5"
             >
               <span>Live Site</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3 text-[#B79A62]" />
             </Link>
 
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className="p-2.5 rounded-xl border border-red-500/20 text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-colors"
+              className="p-2 rounded-xl text-red-300/80 hover:text-red-200 hover:bg-red-950/30 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Navigation Tabs */}
-        <div className="flex items-center space-x-2 border-b border-white/10 pb-3">
+      {/* Main Content Area */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Navigation Tabs (Overview, Responses, Research Insights, Settings) */}
+        <div className="flex items-center space-x-1 sm:space-x-2 border-b border-white/[0.06] pb-3 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wider uppercase transition-all flex items-center space-x-2 shrink-0 ${
               activeTab === "overview"
-                ? "bg-[#B79A62] text-[#0A1410] font-bold shadow-md shadow-[#B79A62]/20"
-                : "text-[#DDE4D9]/70 hover:text-[#F6F4ED] hover:bg-white/5"
+                ? "bg-[#B79A62]/15 text-[#E8D6AC] border border-[#B79A62]/35 shadow-[0_2px_12px_rgba(183,154,98,0.1)]"
+                : "text-[#DDE4D9]/60 hover:text-[#F6F4ED] hover:bg-white/[0.02]"
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Research Analytics</span>
+            <Compass className="w-3.5 h-3.5" />
+            <span>Overview</span>
           </button>
+
           <button
-            onClick={() => setActiveTab("reflections")}
-            className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center space-x-2 ${
-              activeTab === "reflections"
-                ? "bg-[#B79A62] text-[#0A1410] font-bold shadow-md shadow-[#B79A62]/20"
-                : "text-[#DDE4D9]/70 hover:text-[#F6F4ED] hover:bg-white/5"
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Qualitative Reflections ({stats?.recentSuggestions?.length || 0})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center space-x-2 ${
-              activeTab === "users"
-                ? "bg-[#B79A62] text-[#0A1410] font-bold shadow-md shadow-[#B79A62]/20"
-                : "text-[#DDE4D9]/70 hover:text-[#F6F4ED] hover:bg-white/5"
+            onClick={() => setActiveTab("responses")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wider uppercase transition-all flex items-center space-x-2 shrink-0 ${
+              activeTab === "responses"
+                ? "bg-[#B79A62]/15 text-[#E8D6AC] border border-[#B79A62]/35 shadow-[0_2px_12px_rgba(183,154,98,0.1)]"
+                : "text-[#DDE4D9]/60 hover:text-[#F6F4ED] hover:bg-white/[0.02]"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Community Registry ({totalLeads})</span>
+            <span>Responses ({totalLeads})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("insights")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wider uppercase transition-all flex items-center space-x-2 shrink-0 ${
+              activeTab === "insights"
+                ? "bg-[#B79A62]/15 text-[#E8D6AC] border border-[#B79A62]/35 shadow-[0_2px_12px_rgba(183,154,98,0.1)]"
+                : "text-[#DDE4D9]/60 hover:text-[#F6F4ED] hover:bg-white/[0.02]"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Research Insights</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wider uppercase transition-all flex items-center space-x-2 shrink-0 ${
+              activeTab === "settings"
+                ? "bg-[#B79A62]/15 text-[#E8D6AC] border border-[#B79A62]/35 shadow-[0_2px_12px_rgba(183,154,98,0.1)]"
+                : "text-[#DDE4D9]/60 hover:text-[#F6F4ED] hover:bg-white/[0.02]"
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Settings</span>
           </button>
         </div>
 
         {/* ========================================================
-            TAB 1: RESEARCH ANALYTICS
+            TAB 1: OVERVIEW (Essential Real Metrics & Recent Activity)
         ======================================================== */}
         {activeTab === "overview" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Top Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
-                  Community Waitlist
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Essential Metrics: Restrained, Clean, Glassmorphic */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-6 rounded-2xl bg-[#0D1C14]/50 backdrop-blur-xl border border-white/[0.06] hover:border-[#B79A62]/20 transition-all">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#DDE4D9]/60 block mb-1">
+                  Total Registrations
                 </span>
                 <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                  <span className="text-3xl sm:text-4xl font-display font-light text-[#F6F4ED]">
                     {stats?.totalSignups ?? totalLeads}
                   </span>
-                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Real Members</span>
+                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Members</span>
                 </div>
-                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
-                  Active participants registered
+                <p className="text-xs text-[#DDE4D9]/50 mt-2 font-light">
+                  Active database participants
                 </p>
               </div>
 
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
-                  Research Completion
+              <div className="p-6 rounded-2xl bg-[#0D1C14]/50 backdrop-blur-xl border border-white/[0.06] hover:border-[#B79A62]/20 transition-all">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#DDE4D9]/60 block mb-1">
+                  Survey Reflections
                 </span>
                 <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                  <span className="text-3xl sm:text-4xl font-display font-light text-[#F6F4ED]">
                     {stats?.totalSignups ?? totalLeads}
                   </span>
-                  <span className="text-xs text-emerald-400 font-mono">100% Rate</span>
+                  <span className="text-xs text-emerald-400 font-mono">100% Complete</span>
                 </div>
-                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
-                  All 4 research inquiries answered
+                <p className="text-xs text-[#DDE4D9]/50 mt-2 font-light">
+                  Direct personal insights gathered
                 </p>
               </div>
 
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
-                  Beta Testing Volunteers
+              <div className="p-6 rounded-2xl bg-[#0D1C14]/50 backdrop-blur-xl border border-white/[0.06] hover:border-[#B79A62]/20 transition-all">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#DDE4D9]/60 block mb-1">
+                  Beta Testing Interest
                 </span>
                 <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
+                  <span className="text-3xl sm:text-4xl font-display font-light text-[#F6F4ED]">
                     {stats?.betaInterestDistribution
                       ? Object.entries(stats.betaInterestDistribution)
                           .filter(([k]) => k.toLowerCase().includes("yes") || k.toLowerCase().includes("love"))
                           .reduce((acc, [, val]) => acc + val, 0)
                       : 0}
                   </span>
-                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Ready to test</span>
+                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Volunteers</span>
                 </div>
-                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
-                  Direct design feedback contributors
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block mb-1">
-                  Marketing Opt-In
-                </span>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl sm:text-4xl font-black font-display text-[#F6F4ED]">
-                    {stats?.verifiedEmails ?? 0}
-                  </span>
-                  <span className="text-xs text-[#E8D6AC]/75 font-mono">Optional</span>
-                </div>
-                <p className="text-xs text-[#DDE4D9]/60 mt-2 font-light">
-                  Subscribed to Barakah research updates
+                <p className="text-xs text-[#DDE4D9]/50 mt-2 font-light">
+                  Ready to test early private concepts
                 </p>
               </div>
             </div>
 
-            {/* Grid Breakdown: Questions 1 & 2 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Question 1: Attention Struggles */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                      Research Question 01 • Attention Struggles
-                    </span>
-                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
-                      Where Does Attention Feel Most Divided?
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  {stats?.challengeCounts && Object.keys(stats.challengeCounts).length > 0 ? (
-                    Object.entries(stats.challengeCounts)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([challenge, count]) => {
-                        const maxVal = Math.max(...Object.values(stats.challengeCounts), 1);
-                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                        return (
-                          <div key={challenge} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#DDE4D9] font-medium pr-2 leading-relaxed">{challenge}</span>
-                              <span className="font-mono text-[#E8D6AC] shrink-0">
-                                {count} votes ({pct}%)
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-[#B79A62] h-full rounded-full transition-all duration-500"
-                                style={{ width: `${(count / maxVal) * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No challenge data recorded yet.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Question 2: Current Workarounds & Behaviors */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                      Research Question 02 • Existing Behaviors
-                    </span>
-                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
-                      How Community Members Currently Protect Spiritual Time
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  {stats?.usagePriorityCounts && Object.keys(stats.usagePriorityCounts).length > 0 ? (
-                    Object.entries(stats.usagePriorityCounts)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([approach, count]) => {
-                        const maxVal = Math.max(...Object.values(stats.usagePriorityCounts), 1);
-                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                        return (
-                          <div key={approach} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#DDE4D9] font-medium pr-2 leading-relaxed">{approach}</span>
-                              <span className="font-mono text-[#E8D6AC] shrink-0">
-                                {count} votes ({pct}%)
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-[#B79A62] to-[#E8D6AC] h-full rounded-full transition-all duration-500"
-                                style={{ width: `${(count / maxVal) * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No workaround data recorded yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Grid Breakdown: Questions 3 & 4 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Question 3: Why Existing Apps Fail (Churn Drivers) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                      Research Question 03 • Churn &amp; Abandonment Drivers
-                    </span>
-                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
-                      Why People Abandon Existing Islamic Apps
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  {stats?.solutionInterests && Object.keys(stats.solutionInterests).length > 0 ? (
-                    Object.entries(stats.solutionInterests)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([frustration, count]) => {
-                        const maxVal = Math.max(...Object.values(stats.solutionInterests), 1);
-                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                        return (
-                          <div key={frustration} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#DDE4D9] font-medium pr-2 leading-relaxed">{frustration}</span>
-                              <span className="font-mono text-red-300 shrink-0">
-                                {count} votes ({pct}%)
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-red-400 to-[#B79A62] h-full rounded-full transition-all duration-500"
-                                style={{ width: `${(count / maxVal) * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No churn data recorded yet.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Question 4: Ideal Sanctuary Format */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-5">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                      Research Question 04 • The Ideal Sanctuary
-                    </span>
-                    <h3 className="font-display text-lg font-bold text-[#F6F4ED]">
-                      What Genuine Peace With Technology Looks Like
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  {stats?.productTypeDistribution && Object.keys(stats.productTypeDistribution).length > 0 ? (
-                    Object.entries(stats.productTypeDistribution)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([experience, count]) => {
-                        const maxVal = Math.max(...Object.values(stats.productTypeDistribution), 1);
-                        const pct = Math.round((count / (stats.totalSignups || 1)) * 100);
-                        return (
-                          <div key={experience} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#DDE4D9] font-medium pr-2 leading-relaxed">{experience}</span>
-                              <span className="font-mono text-emerald-300 shrink-0">
-                                {count} votes ({pct}%)
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-[#19372D] via-[#B79A62] to-[#E8D6AC] h-full rounded-full transition-all duration-500"
-                                style={{ width: `${(count / maxVal) * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic py-4">No experience preference recorded yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Grid Breakdown: Beta Readiness & Geography */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Beta Testing Breakdown */}
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Engagement Readiness
+            {/* Recent Activity Stream */}
+            <div className="rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC]">
+                  Recent Activity Stream
                 </span>
-                <h3 className="font-display text-base font-bold text-[#F6F4ED]">
-                  Beta Testing Preference Breakdown
-                </h3>
-                <div className="space-y-2.5">
-                  {stats?.betaInterestDistribution && Object.keys(stats.betaInterestDistribution).length > 0 ? (
-                    Object.entries(stats.betaInterestDistribution).map(([opt, count]) => (
-                      <div
-                        key={opt}
-                        className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
-                      >
-                        <span className="text-[#DDE4D9] pr-2">{opt}</span>
-                        <span className="font-mono font-bold text-[#E8D6AC]">{count}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic">No responses yet.</p>
-                  )}
-                </div>
+                <button
+                  onClick={() => setActiveTab("responses")}
+                  className="text-xs text-[#DDE4D9]/60 hover:text-[#F6F4ED] font-mono transition-colors"
+                >
+                  View all &rarr;
+                </button>
               </div>
 
-              {/* Geographic Footprint */}
-              <div className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Geographic Footprint
-                </span>
-                <h3 className="font-display text-base font-bold text-[#F6F4ED]">
-                  Community Distribution by Country
-                </h3>
-                <div className="space-y-2.5">
-                  {stats?.countryDistribution && Object.keys(stats.countryDistribution).length > 0 ? (
-                    Object.entries(stats.countryDistribution)
-                      .sort(([, a], [, b]) => b - a)
-                      .slice(0, 6)
-                      .map(([country, count]) => (
-                        <div
-                          key={country}
-                          className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
-                        >
-                          <span className="text-[#DDE4D9]">{country}</span>
-                          <span className="font-mono font-bold text-[#E8D6AC]">{count}</span>
+              {recentLeads.length === 0 ? (
+                <p className="text-xs text-[#DDE4D9]/50 italic py-4">No recent activity recorded yet.</p>
+              ) : (
+                <div className="divide-y divide-white/[0.04]">
+                  {recentLeads.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => setActiveLead(item)}
+                      className="py-3 flex items-center justify-between hover:bg-white/[0.02] cursor-pointer rounded-xl px-2 -mx-2 transition-colors"
+                    >
+                      <div className="space-y-0.5 truncate max-w-sm">
+                        <div className="text-xs text-[#F6F4ED] font-medium truncate">
+                          {item.name ? `${item.name} &bull; ${item.email}` : item.email}
                         </div>
-                      ))
-                  ) : (
-                    <p className="text-xs text-[#DDE4D9]/60 italic">No geographic data yet.</p>
-                  )}
+                        <div className="text-[11px] text-[#DDE4D9]/50 font-mono truncate">
+                          {item.preferred_product_type || item.primary_feature || "Sanctuary Member"}
+                        </div>
+                      </div>
+
+                      <div className="text-right text-xs font-mono text-[#DDE4D9]/60 shrink-0">
+                        <div>{item.country}</div>
+                        <div className="text-[10px] text-[#DDE4D9]/40">{formatDate(item.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
 
         {/* ========================================================
-            TAB 2: QUALITATIVE REFLECTIONS FEED
+            TAB 2: RESPONSES (Clean, Searchable Registry)
         ======================================================== */}
-        {activeTab === "reflections" && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                Human Voice &bull; Unfiltered Qualitative Feedback
-              </span>
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-[#F6F4ED]">
-                In Their Own Words: What Muslims Need From Technology
-              </h2>
-              <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light max-w-3xl">
-                Open-ended responses submitted by early access participants answering: &ldquo;What is one thing technology could do to genuinely help your relationship with Allah?&rdquo;
-              </p>
-            </div>
-
-            {stats?.recentSuggestions && stats.recentSuggestions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {stats.recentSuggestions.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-6 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl space-y-4 flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <Quote className="w-6 h-6 text-[#B79A62]/60 shrink-0" />
-                      <p className="text-sm text-[#F6F4ED] font-serif italic leading-relaxed">
-                        &ldquo;{item.suggestion}&rdquo;
-                      </p>
-                    </div>
-
-                    <div className="border-t border-white/10 pt-3 flex items-center justify-between text-xs font-mono text-[#DDE4D9]/60">
-                      <span>{item.country} &bull; {item.email.split("@")[0]}***</span>
-                      <span>{formatDate(item.date)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center rounded-3xl bg-[#12241C]/50 border border-white/10 text-[#DDE4D9]/60 font-mono text-xs">
-                No open reflections submitted yet. New reflections will appear here as users submit the survey.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ========================================================
-            TAB 3: COMMUNITY REGISTRY TABLE
-        ======================================================== */}
-        {activeTab === "users" && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Filter Bar */}
-            <div className="p-5 rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-              {/* Search input */}
-              <div className="relative w-full md:w-96">
-                <Search className="w-4 h-4 text-[#DDE4D9]/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {activeTab === "responses" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Search & Filter Bar */}
+            <div className="p-4 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-3.5 h-3.5 text-[#DDE4D9]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search by name, email, or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/40 border border-white/10 text-xs sm:text-sm text-[#F6F4ED] placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-[#F6F4ED] placeholder:text-[#DDE4D9]/30 outline-none focus:border-[#B79A62]/50 transition-colors"
                 />
               </div>
 
-              {/* Filter selects */}
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                {/* Country Filter */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-mono text-[#E8D6AC]/80">Country:</span>
-                  <select
-                    value={selectedCountry}
-                    onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-[#F6F4ED] outline-none focus:border-[#B79A62]"
-                  >
-                    <option value="all">All Countries</option>
-                    {availableCountries.map((c) => (
-                      <option key={c} value={c} className="bg-[#0A1410]">
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Beta Interest Filter */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-mono text-[#E8D6AC]/80">Beta:</span>
-                  <select
-                    value={selectedBetaInterest}
-                    onChange={(e) => setSelectedBetaInterest(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-[#F6F4ED] outline-none focus:border-[#B79A62]"
-                  >
-                    <option value="all">All Preferences</option>
-                    {betaOptions.map((b) => (
-                      <option key={b} value={b} className="bg-[#0A1410]">
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <span className="text-xs font-mono text-[#DDE4D9]/50">Country:</span>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-[#F6F4ED] outline-none focus:border-[#B79A62]/50"
+                >
+                  <option value="all">All Locations</option>
+                  {availableCountries.map((c) => (
+                    <option key={c} value={c} className="bg-[#060D09]">
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* Table Container */}
-            <div className="rounded-3xl bg-[#12241C]/70 backdrop-blur-xl border border-[#B79A62]/30 shadow-xl overflow-hidden">
+            {/* Clean Responses Table */}
+            <div className="rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#0D1C15] border-b border-[#B79A62]/20 font-mono uppercase tracking-wider text-[#E8D6AC]">
+                  <thead className="border-b border-white/[0.06] bg-black/20 font-mono text-[#DDE4D9]/60 uppercase tracking-wider text-[11px]">
                     <tr>
-                      <th className="px-5 py-4">Participant</th>
-                      <th className="px-5 py-4">Country</th>
-                      <th className="px-5 py-4">Beta Interest</th>
-                      <th className="px-5 py-4">Ideal Sanctuary Choice</th>
-                      <th className="px-5 py-4">Registered</th>
-                      <th className="px-5 py-4 text-right">Action</th>
+                      <th className="px-5 py-3.5">User</th>
+                      <th className="px-5 py-3.5">Country</th>
+                      <th className="px-5 py-3.5">Sanctuary Preference</th>
+                      <th className="px-5 py-3.5">Beta</th>
+                      <th className="px-5 py-3.5">Date</th>
+                      <th className="px-5 py-3.5 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-white/[0.04]">
                     {loading ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-12 text-[#DDE4D9]/60 font-mono">
-                          <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#B79A62]" />
-                          Loading real user records...
+                        <td colSpan={6} className="text-center py-10 text-[#DDE4D9]/40 font-mono">
+                          Loading responses...
                         </td>
                       </tr>
                     ) : leads.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-12 text-[#DDE4D9]/60 font-mono">
-                          No records match your query.
+                        <td colSpan={6} className="text-center py-10 text-[#DDE4D9]/40 font-mono">
+                          No matching records found.
                         </td>
                       </tr>
                     ) : (
                       leads.map((lead) => (
                         <tr
                           key={lead.id}
-                          className="hover:bg-white/5 transition-colors group"
+                          className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                          onClick={() => setActiveLead(lead)}
                         >
-                          <td className="px-5 py-4">
-                            <div className="font-semibold text-[#F6F4ED] truncate max-w-xs">
-                              {lead.name ? `${lead.name} • ${lead.email}` : lead.email}
+                          <td className="px-5 py-3.5">
+                            <div className="font-medium text-[#F6F4ED] truncate max-w-xs">
+                              {lead.name ? `${lead.name} &bull; ${lead.email}` : lead.email}
                             </div>
                             {lead.whatsapp_number && (
-                              <div className="text-[11px] text-[#DDE4D9]/60 font-mono">
+                              <div className="text-[10px] text-[#DDE4D9]/40 font-mono">
                                 WhatsApp: {lead.whatsapp_number}
                               </div>
                             )}
                           </td>
-                          <td className="px-5 py-4 text-[#DDE4D9] font-mono">
+                          <td className="px-5 py-3.5 text-[#DDE4D9]/80 font-mono">
                             {lead.country}
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-3.5 text-[#DDE4D9]/80 max-w-xs truncate">
+                            {lead.preferred_product_type || lead.primary_feature || "Sanctuary"}
+                          </td>
+                          <td className="px-5 py-3.5">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
                                 lead.beta_interest?.includes("Yes") || lead.beta_interest?.includes("love")
-                                  ? "bg-emerald-950/80 border border-emerald-500/40 text-emerald-300"
-                                  : lead.beta_interest?.includes("Maybe")
-                                  ? "bg-amber-950/80 border border-amber-500/40 text-amber-300"
-                                  : "bg-white/5 border border-white/10 text-[#DDE4D9]/70"
+                                  ? "bg-emerald-950/60 text-emerald-300 border border-emerald-500/30"
+                                  : "text-[#DDE4D9]/50 bg-white/[0.02]"
                               }`}
                             >
-                              {lead.beta_interest?.includes("Yes") ? "Volunteered" : lead.beta_interest || "Interested"}
+                              {lead.beta_interest?.includes("Yes") ? "Volunteered" : "No"}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-[#DDE4D9] max-w-xs truncate">
-                            {lead.preferred_product_type || lead.primary_feature || "General"}
-                          </td>
-                          <td className="px-5 py-4 text-[#DDE4D9]/70 font-mono whitespace-nowrap">
+                          <td className="px-5 py-3.5 text-[#DDE4D9]/50 font-mono whitespace-nowrap">
                             {formatDate(lead.created_at)}
                           </td>
-                          <td className="px-5 py-4 text-right">
+                          <td className="px-5 py-3.5 text-right">
                             <button
-                              onClick={() => setActiveLead(lead)}
-                              className="px-3 py-1.5 rounded-xl border border-white/10 hover:border-[#B79A62] text-[#DDE4D9] hover:text-[#E8D6AC] bg-white/5 transition-colors inline-flex items-center space-x-1.5 text-xs font-mono"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveLead(lead);
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-[#B79A62]/40 text-[#DDE4D9]/70 hover:text-[#E8D6AC] text-[11px] font-mono transition-colors"
                             >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>View Response</span>
+                              View
                             </button>
                           </td>
                         </tr>
@@ -707,28 +445,28 @@ export default function AdminDashboardPage() {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
-              <div className="p-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-[#DDE4D9]/70">
+              {/* Pagination */}
+              <div className="p-4 border-t border-white/[0.06] flex items-center justify-between text-xs font-mono text-[#DDE4D9]/60">
                 <span>
-                  Showing {leads.length} of {totalLeads} participants
+                  Showing {leads.length} of {totalLeads} responses
                 </span>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => loadData(Math.max(1, page - 1))}
                     disabled={page <= 1}
-                    className="p-2 rounded-xl border border-white/10 hover:border-[#B79A62] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="p-1.5 rounded-lg border border-white/[0.08] hover:border-[#B79A62]/40 disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
-                  <span className="px-2">
-                    Page {page} of {totalPages}
+                  <span className="px-1 text-[11px]">
+                    {page} / {totalPages}
                   </span>
                   <button
                     onClick={() => loadData(Math.min(totalPages, page + 1))}
                     disabled={page >= totalPages}
-                    className="p-2 rounded-xl border border-white/10 hover:border-[#B79A62] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="p-1.5 rounded-lg border border-white/[0.08] hover:border-[#B79A62]/40 disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -737,155 +475,281 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ========================================================
-            MODAL: INDIVIDUAL USER RESPONSE VIEW
+            TAB 3: RESEARCH INSIGHTS (Real Patterns & User Voice)
+        ======================================================== */}
+        {activeTab === "insights" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Two-Column Pattern Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Spiritual Frictions & Struggles */}
+              <div className="p-6 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] space-y-4">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block">
+                  Recurring Spiritual Friction
+                </span>
+                <div className="space-y-3 pt-1">
+                  {stats?.challengeCounts && Object.keys(stats.challengeCounts).length > 0 ? (
+                    Object.entries(stats.challengeCounts)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5)
+                      .map(([challenge, count]) => {
+                        const total = stats.totalSignups || 1;
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                          <div key={challenge} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#DDE4D9] pr-3 truncate">{challenge}</span>
+                              <span className="font-mono text-[#E8D6AC] shrink-0">{pct}%</span>
+                            </div>
+                            <div className="w-full bg-white/[0.04] h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#B79A62] h-full rounded-full transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/40 italic py-2">No friction data recorded yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Desired Sanctuary Formats */}
+              <div className="p-6 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] space-y-4">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC] block">
+                  Desired Sanctuary Formats
+                </span>
+                <div className="space-y-3 pt-1">
+                  {stats?.productTypeDistribution && Object.keys(stats.productTypeDistribution).length > 0 ? (
+                    Object.entries(stats.productTypeDistribution)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5)
+                      .map(([type, count]) => {
+                        const total = stats.totalSignups || 1;
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                          <div key={type} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#DDE4D9] pr-3 truncate">{type}</span>
+                              <span className="font-mono text-emerald-400 shrink-0">{pct}%</span>
+                            </div>
+                            <div className="w-full bg-white/[0.04] h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-emerald-500/80 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-xs text-[#DDE4D9]/40 italic py-2">No sanctuary format data recorded yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Qualitative Voice of the Community (Open Reflections) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-display font-medium text-[#F6F4ED]">
+                    Unfiltered Community Voice
+                  </h3>
+                  <p className="text-xs text-[#DDE4D9]/50 font-light">
+                    Direct quotes from participants answering what technology could genuinely do to help their relationship with Allah.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-[#E8D6AC]">
+                  {stats?.recentSuggestions?.length || 0} reflections
+                </span>
+              </div>
+
+              {stats?.recentSuggestions && stats.recentSuggestions.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {stats.recentSuggestions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-5 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] hover:border-[#B79A62]/30 transition-all flex flex-col justify-between space-y-3"
+                    >
+                      <p className="text-xs text-[#F6F4ED] font-serif italic leading-relaxed">
+                        &ldquo;{item.suggestion}&rdquo;
+                      </p>
+                      <div className="text-[10px] font-mono text-[#DDE4D9]/40 flex items-center justify-between border-t border-white/[0.04] pt-2.5">
+                        <span>{item.country}</span>
+                        <span>{formatDate(item.date)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center rounded-2xl bg-[#0D1C14]/20 border border-white/[0.04] text-xs text-[#DDE4D9]/40 font-mono">
+                  No freeform reflections submitted yet.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB 4: SETTINGS (Data Export, System Health, Security)
+        ======================================================== */}
+        {activeTab === "settings" && (
+          <div className="space-y-6 max-w-2xl animate-in fade-in duration-200">
+            {/* Export Section */}
+            <div className="p-6 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC]">
+                    Research Data Export
+                  </h4>
+                  <p className="text-xs text-[#DDE4D9]/60 font-light mt-0.5">
+                    Download full dataset with all survey reflections and attribution in UTF-8 CSV.
+                  </p>
+                </div>
+                <button
+                  onClick={handleExportCSV}
+                  className="px-4 py-2 rounded-xl bg-[#B79A62] text-[#060D09] font-bold text-xs font-mono uppercase tracking-wider hover:bg-[#D8C296] transition-all flex items-center space-x-1.5 shadow-md shadow-[#B79A62]/10"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Database & Security Architecture */}
+            <div className="p-6 rounded-2xl bg-[#0D1C14]/40 backdrop-blur-xl border border-white/[0.06] space-y-4">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] block">
+                Security &amp; Persistence Status
+              </span>
+
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+                  <span className="text-[#DDE4D9]/70 flex items-center space-x-2">
+                    <Database className="w-3.5 h-3.5 text-[#B79A62]" />
+                    <span>Supabase Storage</span>
+                  </span>
+                  <span className="font-mono text-emerald-400">Connected &bull; Least-Privilege</span>
+                </div>
+
+                <div className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+                  <span className="text-[#DDE4D9]/70 flex items-center space-x-2">
+                    <Lock className="w-3.5 h-3.5 text-[#B79A62]" />
+                    <span>Row Level Security (RLS)</span>
+                  </span>
+                  <span className="font-mono text-emerald-400">Enforced &bull; Anon Restricted</span>
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-[#DDE4D9]/70 flex items-center space-x-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#B79A62]" />
+                    <span>Service Role Credentials</span>
+                  </span>
+                  <span className="font-mono text-[#E8D6AC]">Server-Side Only</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Session Sign Out */}
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-xl border border-red-500/20 text-red-300 hover:text-red-200 hover:bg-red-950/20 text-xs font-mono transition-colors flex items-center space-x-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out of Admin Console</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            MODAL: REFINED PARTICIPANT DETAIL VIEW
         ======================================================== */}
         {activeLead && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="w-full max-w-2xl bg-[#0D1C15] border border-[#B79A62]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6F4ED] max-h-[90vh] overflow-y-auto space-y-6">
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-white/10 pb-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+            <div className="w-full max-w-lg bg-[#0A140E] border border-[#B79A62]/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6F4ED] max-h-[88vh] overflow-y-auto space-y-5">
+              <div className="flex items-start justify-between border-b border-white/[0.06] pb-3">
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                    Participant Research Record
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#E8D6AC] block">
+                    Participant Profile
                   </span>
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-[#F6F4ED] mt-0.5">
-                    {activeLead.name ? `${activeLead.name}` : "Early Access Participant"}
+                  <h3 className="font-display text-lg font-medium text-[#F6F4ED] mt-0.5">
+                    {activeLead.name ? activeLead.name : "Sanctuary Member"}
                   </h3>
-                  <span className="text-xs font-mono text-[#DDE4D9]/70 block mt-0.5">
-                    {activeLead.email} &bull; Registered {formatDate(activeLead.created_at)}
+                  <span className="text-xs font-mono text-[#DDE4D9]/60 block">
+                    {activeLead.email}
                   </span>
                 </div>
                 <button
                   onClick={() => setActiveLead(null)}
-                  className="p-2 rounded-full border border-white/10 hover:border-white/30 text-[#DDE4D9] hover:text-[#F6F4ED] transition-colors"
+                  className="p-1.5 rounded-full border border-white/[0.08] hover:border-white/30 text-[#DDE4D9]/60 hover:text-[#F6F4ED] transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Contact & Demographics */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-[#DDE4D9]/60 block font-mono">Location</span>
-                  <span className="font-semibold text-[#F6F4ED] mt-0.5 block">{activeLead.country}</span>
+              {/* Metadata Grid */}
+              <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <span className="text-[#DDE4D9]/40 block text-[10px]">Location</span>
+                  <span className="text-[#F6F4ED] mt-0.5 block truncate">{activeLead.country}</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-[#DDE4D9]/60 block font-mono">WhatsApp</span>
-                  <span className="font-semibold text-[#F6F4ED] mt-0.5 block">
-                    {activeLead.whatsapp_number || "Not provided"}
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <span className="text-[#DDE4D9]/40 block text-[10px]">Beta Volunteer</span>
+                  <span className="text-[#E8D6AC] mt-0.5 block truncate">
+                    {activeLead.beta_interest?.includes("Yes") ? "Yes, Volunteer" : "No"}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-[#DDE4D9]/60 block font-mono">Beta Testing</span>
-                  <span className="font-semibold text-[#E8D6AC] mt-0.5 block truncate">
-                    {activeLead.beta_interest || "Interested"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Question 1: Attention Struggles */}
-              <div className="space-y-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Q1: Where Attention Feels Divided
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {activeLead.challenges && activeLead.challenges.length > 0 ? (
-                    activeLead.challenges.map((c) => (
-                      <span
-                        key={c}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[#DDE4D9]"
-                      >
-                        {c}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-[#DDE4D9]/50 italic">None selected</span>
-                  )}
-                </div>
-                {activeLead.other_challenge && (
-                  <p className="text-xs text-[#E8D6AC] font-mono mt-1 pl-1">
-                    Other specified: &ldquo;{activeLead.other_challenge}&rdquo;
-                  </p>
+                {activeLead.whatsapp_number && (
+                  <div className="col-span-2 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                    <span className="text-[#DDE4D9]/40 block text-[10px]">WhatsApp</span>
+                    <span className="text-[#F6F4ED] mt-0.5 block">{activeLead.whatsapp_number}</span>
+                  </div>
                 )}
               </div>
 
-              {/* Question 2: Current Workarounds */}
-              <div className="space-y-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Q2: Current Workarounds &amp; Behaviors
+              {/* Inquiry 1 Response: Spiritual Friction */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC]">
+                  Spiritual Friction / Struggle
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  {activeLead.usage_priorities && activeLead.usage_priorities.length > 0 ? (
-                    activeLead.usage_priorities.map((p) => (
-                      <span
-                        key={p}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[#DDE4D9]"
-                      >
-                        {p}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-[#DDE4D9]/50 italic">None recorded</span>
-                  )}
-                </div>
+                <p className="text-xs text-[#DDE4D9] bg-white/[0.02] p-3 rounded-xl border border-white/[0.04] leading-relaxed">
+                  {activeLead.challenges?.length
+                    ? activeLead.challenges.join("; ")
+                    : activeLead.other_challenge || "Not specified"}
+                </p>
               </div>
 
-              {/* Question 3: Why Existing Apps Fail */}
-              <div className="space-y-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Q3: App Churn &amp; Abandonment Drivers
+              {/* Inquiry 2 Response: Desired Sanctuary */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC]">
+                  Desired Sanctuary
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  {(activeLead.desired_solutions || activeLead.features || []).map((s) => (
-                    <span
-                      key={s}
-                      className="px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-200"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Question 4: Ideal Digital Experience */}
-              <div className="space-y-1">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                  Q4: Ideal Digital Sanctuary Orientation
-                </span>
-                <p className="text-sm font-semibold text-[#F6F4ED] bg-white/5 p-3 rounded-2xl border border-white/5">
+                <p className="text-xs text-[#DDE4D9] bg-white/[0.02] p-3 rounded-xl border border-white/[0.04] leading-relaxed">
                   {activeLead.preferred_product_type || activeLead.primary_feature || "Not specified"}
                 </p>
               </div>
 
-              {/* Open Qualitative Reflection */}
+              {/* Open Reflection */}
               {activeLead.user_suggestions && (
-                <div className="space-y-1">
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#E8D6AC] font-semibold block">
-                    Participant&apos;s Personal Reflection
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#E8D6AC]">
+                    Personal Reflection
                   </span>
-                  <p className="text-xs text-[#DDE4D9] bg-[#B79A62]/10 p-3.5 rounded-2xl border border-[#B79A62]/30 italic leading-relaxed">
+                  <p className="text-xs text-[#F6F4ED] font-serif italic bg-[#B79A62]/[0.08] p-3.5 rounded-xl border border-[#B79A62]/20 leading-relaxed">
                     &ldquo;{activeLead.user_suggestions}&rdquo;
                   </p>
                 </div>
               )}
 
-              {/* Attribution Meta */}
-              {activeLead.attribution && (
-                <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5 text-[11px] font-mono text-[#DDE4D9]/60 space-y-1">
-                  <span className="text-[#E8D6AC] block font-semibold">Attribution Metadata:</span>
-                  <div>Source: {activeLead.attribution.utm_source || "direct"}</div>
-                  <div>Medium: {activeLead.attribution.utm_medium || "none"}</div>
-                  <div>Campaign: {activeLead.attribution.utm_campaign || "none"}</div>
-                  {activeLead.attribution.referrer && (
-                    <div>Referrer: {activeLead.attribution.referrer}</div>
-                  )}
-                </div>
-              )}
-
-              <div className="pt-2 flex justify-end">
+              {/* Registration timestamp */}
+              <div className="text-[10px] font-mono text-[#DDE4D9]/40 flex items-center justify-between border-t border-white/[0.06] pt-3">
+                <span>Registered: {formatDate(activeLead.created_at)}</span>
                 <button
                   onClick={() => setActiveLead(null)}
-                  className="px-6 py-2.5 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-colors"
+                  className="px-4 py-1.5 rounded-full bg-[#B79A62] text-[#060D09] font-bold text-xs uppercase tracking-wider hover:bg-[#D8C296] transition-colors"
                 >
                   Close
                 </button>

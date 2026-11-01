@@ -36,6 +36,25 @@ export const SOCIAL_PROFILES = {
 // Grounded in human-centered design, Islamic digital wellbeing, and churn analysis
 // ============================================================================
 
+// ============================================================================
+// CONVERSATIONAL EDITORIAL SURVEY DEFINITIONS (MINIMAL 2–3 STEPS)
+// ============================================================================
+
+export const CONVERSATIONAL_FRICTIONS = [
+  "Mindless scrolling during quiet spiritual hours (late night or post-Fajr)",
+  "Checking notifications right before or after Salah, scattering my focus",
+  "Weeks quietly slipping away without opening the Quran",
+  "Streak guilt — starting strong, missing a day, then feeling defeated",
+  "Constant mental clutter & digital noise draining my spiritual peace",
+] as const;
+
+export const CONVERSATIONAL_SANCTUARY_VISIONS = [
+  "A quiet digital sanctuary (zero ads, zero noise, just space to breathe)",
+  "A sacred pause (gentle friction before opening addictive apps)",
+  "Gentle Sunnah habits (small, consistent deeds without pressure or guilt)",
+  "Quranic Tadabbur (a few profound verses to carry through my day)",
+] as const;
+
 // Question 1: The Core Attention Tension (Real Problems)
 export const RESEARCH_Q1_STRUGGLES = [
   "Mindless scrolling during sacred quiet times (Late nights, pre-Fajr, or upon waking)",

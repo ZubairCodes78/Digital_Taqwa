@@ -50,8 +50,8 @@ export const completeWaitlistSchema = z.object({
   whatsapp_number: z.string().trim().optional(),
   marketing_consent: z.boolean().default(false),
 
-  // Research Question 1: Attention Struggles
-  challenges: z.array(z.string()).min(1, "At least one attention struggle is required"),
+  // Research Question 1: Attention Struggles / Friction
+  challenges: z.array(z.string()).default([]),
   other_challenge: z.string().trim().optional(),
 
   // Research Question 2: Current Workarounds & Approaches

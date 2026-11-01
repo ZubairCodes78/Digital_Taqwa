@@ -46,3 +46,4 @@ COMMENT ON TABLE public.user_challenges IS 'Research Question 1: Attention strug
 COMMENT ON TABLE public.usage_priorities IS 'Research Question 2: Current workarounds & behaviors (e.g. standard prayer apps, phone blockers, physical mushaf).';
 COMMENT ON TABLE public.feature_interests IS 'Research Question 3: Why existing apps fail & churn drivers (e.g. notification fatigue, streak guilt, robotic checklist).';
 COMMENT ON COLUMN public.waitlist_users.marketing_consent IS 'Optional consent to receive occasional research findings from Digital Taqwa.';
+
