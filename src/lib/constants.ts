@@ -31,41 +31,55 @@ export const SOCIAL_PROFILES = {
   },
 };
 
-// STEP 1 — CURRENT CHALLENGES
-export const SURVEY_CHALLENGES = [
-  "Maintaining daily Islamic habits",
-  "Consistency with Quran reading",
-  "Maintaining prayer routines",
-  "Excessive screen time and distractions",
-  "Lack of discipline and consistency",
+// ============================================================================
+// RESEARCH-LED SURVEY ARCHITECTURE FOR DIGITAL TAQWA
+// Grounded in human-centered design, Islamic digital wellbeing, and churn analysis
+// ============================================================================
+
+// Question 1: The Core Attention Tension (Real Problems)
+export const RESEARCH_Q1_STRUGGLES = [
+  "Mindless scrolling during sacred quiet times (Late nights, pre-Fajr, or upon waking)",
+  "Scattered attention during prayer (Struggling to find stillness and khushu’)",
+  "Inconsistent Quran reading (Wanting depth, but days and weeks slip by)",
+  "Guilt from broken streaks (Starting strong, missing a day, and feeling defeated)",
+  "Mental clutter & digital fatigue (Constantly stimulated, feeling spiritually numb)",
   "Other",
 ] as const;
 
-// STEP 2 — WHAT WOULD HELP YOU?
-export const SURVEY_DESIRED_SOLUTIONS = [
-  "Islamic habit building",
-  "Quran consistency",
-  "Prayer reminders and routines",
-  "Reducing digital distractions",
-  "Daily Islamic reminders",
-  "Structured Deen goals",
+// Question 2: Current Workarounds & Behaviors (What people actually do)
+export const RESEARCH_Q2_WORKAROUNDS = [
+  "Relying on standard prayer & Quran apps (Checking prayer times, notifications)",
+  "General phone screen-time limits or blockers (App timers, DND, grayscale)",
+  "Physical non-digital tools (Physical Mushaf, handwritten journals, quiet spaces)",
+  "Relying purely on willpower (Telling myself I will do better tomorrow)",
+  "I feel stuck and don't have a working system right now",
   "Other",
 ] as const;
 
-// STEP 3 — PREFERRED EXPERIENCE
-export const SURVEY_PRODUCT_TYPES = [
-  "Islamic lifestyle companion",
-  "Islamic habit-building platform",
-  "Quran and prayer companion",
-  "Digital self-discipline tool",
-  "Not sure yet",
+// Question 3: Why Existing Solutions Fail (Unmet Needs & Churn Drivers)
+export const RESEARCH_Q3_FRUSTRATIONS = [
+  "Too many push notifications (Feeling nagged, stressed, or interrupted)",
+  "Streak guilt & shame mechanics (Missing one day ruins momentum)",
+  "Pop-up ads, commercial feel, or privacy worries (Jarring during worship)",
+  "Feels like a robotic checklist (Turning Deen into a transactional task to tick)",
+  "Too bloated or complicated (I just wanted quiet, peaceful simplicity)",
+  "Other",
 ] as const;
 
-// STEP 4 — BETA TESTING PARTICIPATION
-export const SURVEY_BETA_INTEREST_OPTIONS = [
-  "Yes, I am interested",
-  "Maybe, depending on the application",
-  "Not right now",
+// Question 4: The Ideal Digital Relationship (Voluntary Pull & Core Orientation)
+export const RESEARCH_Q4_EXPERIENCE = [
+  "A Quiet Digital Sanctuary (Zero ads, zero noise — a sacred pause to breathe and remember Allah)",
+  "Gentle Friction Against Distraction (A mindful pause or dhikr breath before opening addictive apps)",
+  "Sustainable Sunnah Habit Anchors (Small, effortless daily routines built around consistency without guilt)",
+  "Reflective Quran Companion (Focusing on a few verses and deep meaning rather than reading volume)",
+  "I am not sure yet — I want to explore with you",
+] as const;
+
+// Step 5: Beta Testing Participation
+export const RESEARCH_BETA_INTEREST = [
+  "Yes, I would love to test early concepts and provide feedback",
+  "Maybe, depending on what you build",
+  "Not right now, just notify me when you launch",
 ] as const;
 
 export const SURVEY_COUNTRIES = [
@@ -79,19 +93,27 @@ export const SURVEY_COUNTRIES = [
   "Other",
 ] as const;
 
-// Legacy aliases
-export const USER_CHALLENGES = SURVEY_CHALLENGES.map((label) => ({
-  id: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-  label,
-  description: label,
-}));
+// Circular YouTube Quran Audio References
+export const YOUTUBE_QURAN_PLAYLIST = [
+  {
+    videoId: "HKlu1PDL0x0",
+    title: "Surah Al-Fajr",
+    verses: "Verses 21–30 • Kalla Iza Dukkati Al-Ardu",
+    reciter: "Sheikh Yasser Al-Dosari",
+    url: "https://youtube.com/shorts/HKlu1PDL0x0",
+  },
+  {
+    videoId: "gDl6s--vkmg",
+    title: "Surah Al-Mu’minun",
+    verses: "Verses 84–90 • Qul Limanil Ardu Wa Man Fiha",
+    reciter: "Sheikh Yasser Al-Dosari",
+    url: "https://youtu.be/gDl6s--vkmg",
+  },
+] as const;
 
-export const PROPOSED_FEATURES = SURVEY_DESIRED_SOLUTIONS.map((title, i) => ({
-  id: title.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-  number: `0${i + 1}`,
-  title,
-  shortLabel: title,
-  summary: title,
-}));
-
+// Backward-compatible aliases
+export const SURVEY_CHALLENGES = RESEARCH_Q1_STRUGGLES;
+export const SURVEY_DESIRED_SOLUTIONS = RESEARCH_Q3_FRUSTRATIONS;
+export const SURVEY_PRODUCT_TYPES = RESEARCH_Q4_EXPERIENCE;
+export const SURVEY_BETA_INTEREST_OPTIONS = RESEARCH_BETA_INTEREST;
 export const COUNTRIES = SURVEY_COUNTRIES;

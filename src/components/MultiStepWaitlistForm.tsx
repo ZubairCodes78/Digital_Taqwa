@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  SURVEY_CHALLENGES,
-  SURVEY_DESIRED_SOLUTIONS,
-  SURVEY_PRODUCT_TYPES,
-  SURVEY_BETA_INTEREST_OPTIONS,
-  SOCIAL_PROFILES,
+  RESEARCH_Q1_STRUGGLES,
+  RESEARCH_Q2_WORKAROUNDS,
+  RESEARCH_Q3_FRUSTRATIONS,
+  RESEARCH_Q4_EXPERIENCE,
+  RESEARCH_BETA_INTEREST,
+  SURVEY_COUNTRIES,
 } from "@/lib/constants";
 import {
   captureAndPersistAttribution,
@@ -25,20 +26,24 @@ import {
   Loader2,
   ExternalLink,
   Sparkles,
+  Heart,
 } from "lucide-react";
 
 interface SurveyFormState {
-  // Question 1
+  // Question 1: Attention Struggles
   challenges: string[];
   other_challenge: string;
-  // Question 2
+  // Question 2: Current Workarounds & Approaches
+  usage_priorities: string[];
+  other_approach: string;
+  // Question 3: Why Existing Apps Fail (Churn Drivers)
   desired_solutions: string[];
-  user_suggestions: string;
-  // Question 3
+  other_frustration: string;
+  // Question 4: Ideal Experience & Qualitative Reflection
   preferred_product_type: string;
-  // Question 4
+  user_suggestions: string;
+  // Step 5: Contact & Beta Testing
   beta_interest: string;
-  // Step 5: Contact Info
   email: string;
   name: string;
   whatsapp_number: string;
@@ -68,10 +73,13 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
   const [formData, setFormData] = useState<SurveyFormState>({
     challenges: [],
     other_challenge: "",
+    usage_priorities: [],
+    other_approach: "",
     desired_solutions: [],
-    user_suggestions: "",
+    other_frustration: "",
     preferred_product_type: "",
-    beta_interest: "Yes, I am interested",
+    user_suggestions: "",
+    beta_interest: "Yes, I would love to test early concepts and provide feedback",
     email: "",
     name: "",
     whatsapp_number: "",
@@ -95,7 +103,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     }
   };
 
-  // Question 1: Toggle Challenges (Multi-select)
+  // Question 1: Toggle Attention Struggles (Multi-select)
   const toggleChallenge = (item: string) => {
     handleStartInteraction();
     setErrorMessage("");
@@ -110,8 +118,22 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     });
   };
 
-  // Question 2: Toggle Desired Solutions (Multi-select)
-  const toggleSolution = (item: string) => {
+  // Question 2: Toggle Current Approaches / Workarounds (Multi-select)
+  const toggleApproach = (item: string) => {
+    setErrorMessage("");
+    setFormData((prev) => {
+      const exists = prev.usage_priorities.includes(item);
+      return {
+        ...prev,
+        usage_priorities: exists
+          ? prev.usage_priorities.filter((p) => p !== item)
+          : [...prev.usage_priorities, item],
+      };
+    });
+  };
+
+  // Question 3: Toggle App Frustrations / Churn Drivers (Multi-select)
+  const toggleFrustration = (item: string) => {
     setErrorMessage("");
     setFormData((prev) => {
       const exists = prev.desired_solutions.includes(item);
@@ -127,52 +149,56 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
   // Step 1 Validation -> Step 2
   const goToStep2 = () => {
     if (formData.challenges.length === 0) {
-      setErrorMessage("Please select at least one challenge you currently face.");
+      setErrorMessage("Please select at least one area where your attention feels divided.");
       return;
     }
     if (formData.challenges.includes("Other") && !formData.other_challenge.trim()) {
-      setErrorMessage("Please specify your other challenge, or deselect 'Other'.");
+      setErrorMessage("Please share a brief note about your other struggle, or uncheck 'Other'.");
       return;
     }
     setErrorMessage("");
-    trackFormStepCompleted(1, "challenges");
+    trackFormStepCompleted(1, "struggles");
     setStep(2);
   };
 
   // Step 2 Validation -> Step 3
   const goToStep3 = () => {
-    if (formData.desired_solutions.length === 0) {
-      setErrorMessage("Please select at least one capability that would help you most.");
+    if (formData.usage_priorities.length === 0) {
+      setErrorMessage("Please select how you currently try to protect your spiritual time.");
       return;
     }
-    if (formData.desired_solutions.includes("Other") && !formData.user_suggestions.trim()) {
-      setErrorMessage("Please specify your other suggestion, or deselect 'Other'.");
+    if (formData.usage_priorities.includes("Other") && !formData.other_approach.trim()) {
+      setErrorMessage("Please share a brief note about your approach, or uncheck 'Other'.");
       return;
     }
     setErrorMessage("");
-    trackFormStepCompleted(2, "desired_solutions");
+    trackFormStepCompleted(2, "workarounds");
     setStep(3);
   };
 
   // Step 3 Validation -> Step 4
   const goToStep4 = () => {
-    if (!formData.preferred_product_type) {
-      setErrorMessage("Please select what kind of digital experience you are most interested in.");
+    if (formData.desired_solutions.length === 0) {
+      setErrorMessage("Please select what causes you to stop using other apps or routines.");
+      return;
+    }
+    if (formData.desired_solutions.includes("Other") && !formData.other_frustration.trim()) {
+      setErrorMessage("Please share a brief note about your frustration, or uncheck 'Other'.");
       return;
     }
     setErrorMessage("");
-    trackFormStepCompleted(3, "product_type");
+    trackFormStepCompleted(3, "frustrations");
     setStep(4);
   };
 
   // Step 4 Validation -> Step 5
   const goToStep5 = () => {
-    if (!formData.beta_interest) {
-      setErrorMessage("Please choose your beta testing preference.");
+    if (!formData.preferred_product_type) {
+      setErrorMessage("Please select which direction feels most resonant to you.");
       return;
     }
     setErrorMessage("");
-    trackFormStepCompleted(4, "beta_interest");
+    trackFormStepCompleted(4, "ideal_experience");
     setStep(5);
   };
 
@@ -198,12 +224,15 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
         email: emailTrimmed,
         whatsapp_number: formData.whatsapp_number.trim() || undefined,
         marketing_consent: Boolean(formData.marketing_consent),
-        // Survey responses
+        // Research responses
         challenges: formData.challenges,
         other_challenge: formData.other_challenge.trim() || undefined,
+        usage_priorities: formData.usage_priorities,
+        other_approach: formData.other_approach.trim() || undefined,
         desired_solutions: formData.desired_solutions,
-        user_suggestions: formData.user_suggestions.trim() || undefined,
+        other_frustration: formData.other_frustration.trim() || undefined,
         preferred_product_type: formData.preferred_product_type,
+        user_suggestions: formData.user_suggestions.trim() || undefined,
         beta_interest: formData.beta_interest,
         // Backward compatibility mappings
         features: formData.desired_solutions,
@@ -247,7 +276,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       };
 
       setSuccessData(successPayload);
-      setStep(6); // Step 6 = Thank-You Confirmation Screen
+      setStep(6); // Step 6 = Confirmation Screen
       onSuccess?.(successPayload);
 
       try {
@@ -276,7 +305,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
   };
 
   return (
-    <div className="bg-[#10221A]/75 backdrop-blur-2xl border border-[#B79A62]/35 rounded-3xl p-5 sm:p-8 md:p-11 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-[#F6F4ED] max-w-2xl mx-auto transition-all">
+    <div className="bg-[#10221A]/80 backdrop-blur-2xl border border-[#B79A62]/35 rounded-3xl p-5 sm:p-8 md:p-11 shadow-[0_20px_60px_0_rgba(0,0,0,0.6)] text-[#F6F4ED] max-w-2xl mx-auto transition-all">
       {/* Bot Honeypot */}
       <input
         type="text"
@@ -294,14 +323,14 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between text-xs font-mono mb-2">
             <span className="text-[#E8D6AC] font-semibold tracking-wider uppercase">
-              {step === 1 && "Step 01 / 05 • Biggest Challenge"}
-              {step === 2 && "Step 02 / 05 • What Would Help Most"}
-              {step === 3 && "Step 03 / 05 • Digital Experience"}
-              {step === 4 && "Step 04 / 05 • Beta Testing"}
-              {step === 5 && "Step 05 / 05 • Join the Waitlist"}
+              {step === 1 && "Phase 01 / 05 • Attention & Focus"}
+              {step === 2 && "Phase 02 / 05 • Current Workarounds"}
+              {step === 3 && "Phase 03 / 05 • Why Other Apps Fail"}
+              {step === 4 && "Phase 04 / 05 • Ideal Sanctuary"}
+              {step === 5 && "Phase 05 / 05 • Early Access Invite"}
             </span>
             <span className="text-[#DDE4D9]/70">
-              ~{Math.max(10, 45 - (step - 1) * 9)}s
+              ~{Math.max(10, 50 - (step - 1) * 10)}s
             </span>
           </div>
 
@@ -326,24 +355,24 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          QUESTION 1: BIGGEST CHALLENGE (Multiple Select)
+          QUESTION 1: ATTENTION STRUGGLES (Multiple Select)
       ======================================================== */}
       {step === 1 && (
         <div className="space-y-5 animate-in fade-in duration-300">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
-              Question 1 of 4
+              Research Question 1 of 4
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
-              What is your biggest challenge right now?
+              Where does your attention feel most divided?
             </h3>
             <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
-              Select all that apply to you. Your answers directly shape our product priorities.
+              Select all that apply. We want to understand where distraction hits hardest so we can build genuine tranquility.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-2.5 pt-1">
-            {SURVEY_CHALLENGES.map((item) => {
+            {RESEARCH_Q1_STRUGGLES.map((item) => {
               const checked = formData.challenges.includes(item);
               return (
                 <button
@@ -356,7 +385,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                       : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
-                  <span className="leading-snug">{item}</span>
+                  <span className="leading-snug pr-2">{item}</span>
                   <div
                     className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ml-3 transition-colors ${
                       checked
@@ -375,13 +404,13 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
           {formData.challenges.includes("Other") && (
             <div className="pt-1 animate-in fade-in duration-200">
               <label className="block text-xs text-[#E8D6AC] mb-1 font-mono">
-                Please specify your other challenge:
+                Please specify your struggle:
               </label>
               <input
                 type="text"
                 value={formData.other_challenge}
                 onChange={(e) => setFormData({ ...formData, other_challenge: e.target.value })}
-                placeholder="e.g., Struggling to wake up for Tahajjud, lack of accountability..."
+                placeholder="e.g. Opening Instagram right after waking for Fajr..."
                 className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
               />
             </div>
@@ -401,31 +430,31 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          QUESTION 2: WHAT WOULD HELP YOU MOST (Multiple Select)
+          QUESTION 2: CURRENT WORKAROUNDS & BEHAVIORS (Multiple Select)
       ======================================================== */}
       {step === 2 && (
         <div className="space-y-5 animate-in fade-in duration-300">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
-              Question 2 of 4
+              Research Question 2 of 4
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
-              What would help you most right now?
+              How do you currently try to protect your spiritual time?
             </h3>
             <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
-              Select all solutions that would bring actual value to your Deen.
+              Select all approaches you use or have tried. This reveals what is currently missing.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-            {SURVEY_DESIRED_SOLUTIONS.map((item) => {
-              const checked = formData.desired_solutions.includes(item);
+          <div className="grid grid-cols-1 gap-2.5 pt-1">
+            {RESEARCH_Q2_WORKAROUNDS.map((item) => {
+              const checked = formData.usage_priorities.includes(item);
               return (
                 <button
                   type="button"
                   key={item}
-                  onClick={() => toggleSolution(item)}
-                  className={`text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
+                  onClick={() => toggleApproach(item)}
+                  className={`text-left p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
                     checked
                       ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-medium shadow-md shadow-black/20"
                       : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
@@ -433,13 +462,13 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 >
                   <span className="leading-snug pr-2">{item}</span>
                   <div
-                    className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ml-3 transition-colors ${
                       checked
                         ? "bg-[#B79A62] border-[#B79A62] text-[#0A1410]"
                         : "border-white/30 bg-black/20"
                     }`}
                   >
-                    {checked && <Check className="w-3 h-3 stroke-[3]" />}
+                    {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                 </button>
               );
@@ -447,16 +476,16 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
           </div>
 
           {/* Optional "Other" input field */}
-          {formData.desired_solutions.includes("Other") && (
+          {formData.usage_priorities.includes("Other") && (
             <div className="pt-1 animate-in fade-in duration-200">
               <label className="block text-xs text-[#E8D6AC] mb-1 font-mono">
-                Please specify what would help you most:
+                Please specify your approach:
               </label>
               <input
                 type="text"
-                value={formData.user_suggestions}
-                onChange={(e) => setFormData({ ...formData, user_suggestions: e.target.value })}
-                placeholder="e.g. Personalized Quran memorization companion..."
+                value={formData.other_approach}
+                onChange={(e) => setFormData({ ...formData, other_approach: e.target.value })}
+                placeholder="e.g. Leaving phone in another room during Salah..."
                 className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
               />
             </div>
@@ -487,53 +516,66 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          QUESTION 3: KIND OF DIGITAL EXPERIENCE (Single Select)
+          QUESTION 3: WHY EXISTING APPS FAIL (Multiple Select)
       ======================================================== */}
       {step === 3 && (
         <div className="space-y-5 animate-in fade-in duration-300">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
-              Question 3 of 4
+              Research Question 3 of 4
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
-              What kind of digital experience would you be most interested in?
+              What causes you to stop using Islamic or habit apps?
             </h3>
             <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
-              Choose the one direction that aligns best with what you need.
+              Tell us what usually pushes you away so we never repeat those patterns.
             </p>
           </div>
 
-          <div className="space-y-2.5 pt-1">
-            {SURVEY_PRODUCT_TYPES.map((item) => {
-              const selected = formData.preferred_product_type === item;
+          <div className="grid grid-cols-1 gap-2.5 pt-1">
+            {RESEARCH_Q3_FRUSTRATIONS.map((item) => {
+              const checked = formData.desired_solutions.includes(item);
               return (
                 <button
                   type="button"
                   key={item}
-                  onClick={() => {
-                    setErrorMessage("");
-                    setFormData({ ...formData, preferred_product_type: item });
-                  }}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
-                    selected
-                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-semibold shadow-md shadow-black/20"
+                  onClick={() => toggleFrustration(item)}
+                  className={`text-left p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
+                    checked
+                      ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-medium shadow-md shadow-black/20"
                       : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
-                  <span>{item}</span>
+                  <span className="leading-snug pr-2">{item}</span>
                   <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-3 ${
-                      selected
-                        ? "border-[#B79A62] bg-[#B79A62]"
-                        : "border-white/30"
+                    className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ml-3 transition-colors ${
+                      checked
+                        ? "bg-[#B79A62] border-[#B79A62] text-[#0A1410]"
+                        : "border-white/30 bg-black/20"
                     }`}
                   >
-                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-[#0A1410]" />}
+                    {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Optional "Other" input field */}
+          {formData.desired_solutions.includes("Other") && (
+            <div className="pt-1 animate-in fade-in duration-200">
+              <label className="block text-xs text-[#E8D6AC] mb-1 font-mono">
+                Please specify what frustrates you:
+              </label>
+              <input
+                type="text"
+                value={formData.other_frustration}
+                onChange={(e) => setFormData({ ...formData, other_frustration: e.target.value })}
+                placeholder="e.g. Too many ads popping up during Quran recitation..."
+                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62]"
+              />
+            </div>
+          )}
 
           <div className="pt-3 flex items-center justify-between gap-3">
             <button
@@ -560,32 +602,32 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          QUESTION 4: BETA TESTING PARTICIPATION (Single Select)
+          QUESTION 4: IDEAL DIGITAL RELATIONSHIP & REFLECTION (Single Select + Optional Text)
       ======================================================== */}
       {step === 4 && (
         <div className="space-y-5 animate-in fade-in duration-300">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
-              Question 4 of 4
+              Research Question 4 of 4
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
-              Would you be interested in beta testing Digital Taqwa before launch?
+              If technology could truly bring peace to your Deen, what would it look like?
             </h3>
             <p className="text-xs sm:text-sm text-[#DDE4D9]/80 font-light mt-1">
-              Beta testers will get early private access and provide direct feedback on early builds.
+              Choose the one direction that aligns best with what you need right now.
             </p>
           </div>
 
           <div className="space-y-2.5 pt-1">
-            {SURVEY_BETA_INTEREST_OPTIONS.map((opt) => {
-              const selected = formData.beta_interest === opt;
+            {RESEARCH_Q4_EXPERIENCE.map((item) => {
+              const selected = formData.preferred_product_type === item;
               return (
                 <button
                   type="button"
-                  key={opt}
+                  key={item}
                   onClick={() => {
                     setErrorMessage("");
-                    setFormData({ ...formData, beta_interest: opt });
+                    setFormData({ ...formData, preferred_product_type: item });
                   }}
                   className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between text-xs sm:text-sm ${
                     selected
@@ -593,7 +635,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                       : "bg-white/5 border-white/10 text-[#DDE4D9]/85 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
-                  <span>{opt}</span>
+                  <span className="leading-snug pr-2">{item}</span>
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-3 ${
                       selected
@@ -606,6 +648,20 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 </button>
               );
             })}
+          </div>
+
+          {/* Optional Qualitative Reflection Field */}
+          <div className="pt-2 animate-in fade-in duration-200">
+            <label className="block text-xs text-[#E8D6AC] mb-1.5 font-mono">
+              In your own words: What is one thing technology could do to genuinely help your relationship with Allah? (Optional)
+            </label>
+            <textarea
+              rows={3}
+              value={formData.user_suggestions}
+              onChange={(e) => setFormData({ ...formData, user_suggestions: e.target.value })}
+              placeholder="e.g. Give me a quiet pause before opening social media so I can recite Ayat al-Kursi, or remind me gently without guilt..."
+              className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/15 text-[#F6F4ED] text-xs sm:text-sm placeholder:text-[#DDE4D9]/40 outline-none focus:border-[#B79A62] resize-none"
+            />
           </div>
 
           <div className="pt-3 flex items-center justify-between gap-3">
@@ -633,13 +689,13 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          STEP 5: CONTACT INFORMATION (Email required, Name/WhatsApp/Consent optional)
+          STEP 5: CONTACT INFORMATION & BETA INTEREST
       ======================================================== */}
       {step === 5 && (
         <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-300">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#E8D6AC] font-semibold block mb-1">
-              Final Step • Early Access
+              Final Step • Early Access Invite
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-black text-[#F6F4ED] leading-snug">
               Where should we send your early access invite?
@@ -693,6 +749,56 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             </div>
           </div>
 
+          {/* Country Selection */}
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-wider text-[#DDE4D9]/70 mb-1.5">
+              Location / Country (Optional)
+            </label>
+            <select
+              value={formData.country}
+              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+              className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/15 text-[#F6F4ED] text-sm outline-none focus:border-[#B79A62] transition-colors"
+            >
+              <option value="Global" className="bg-[#0A1410] text-[#F6F4ED]">Global / International</option>
+              {SURVEY_COUNTRIES.map((c) => (
+                <option key={c} value={c} className="bg-[#0A1410] text-[#F6F4ED]">
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Beta Testing Preference */}
+          <div className="pt-1">
+            <label className="block text-xs font-mono uppercase tracking-wider text-[#E8D6AC] mb-2">
+              Would you like to test early concepts before public launch?
+            </label>
+            <div className="space-y-2">
+              {RESEARCH_BETA_INTEREST.map((opt) => {
+                const selected = formData.beta_interest === opt;
+                return (
+                  <button
+                    type="button"
+                    key={opt}
+                    onClick={() => setFormData({ ...formData, beta_interest: opt })}
+                    className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm flex items-center justify-between transition-all ${
+                      selected
+                        ? "bg-[#B79A62]/20 border-[#B79A62] text-[#F6F4ED] font-medium"
+                        : "bg-white/5 border-white/10 text-[#DDE4D9]/80 hover:bg-white/10"
+                    }`}
+                  >
+                    <span>{opt}</span>
+                    <div
+                      className={`w-3.5 h-3.5 rounded-full border shrink-0 ml-2 ${
+                        selected ? "bg-[#B79A62] border-[#B79A62]" : "border-white/30"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Optional Marketing Consent Checkbox (Unchecked by default) */}
           <div className="pt-2">
             <label className="flex items-start space-x-3 text-xs text-[#DDE4D9]/85 cursor-pointer select-none">
@@ -703,7 +809,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 className="mt-0.5 rounded accent-[#B79A62] w-4 h-4 shrink-0 cursor-pointer"
               />
               <span className="leading-relaxed">
-                I would like to receive occasional research updates and project announcements from Digital Taqwa &amp; Barakah Habits Daily. (Optional)
+                I would like to receive occasional research findings and project announcements from Digital Taqwa &amp; Barakah Habits Daily. (Optional)
               </span>
             </label>
           </div>
@@ -728,7 +834,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Joining Waitlist...</span>
+                  <span>Submitting Insights...</span>
                 </>
               ) : (
                 <>
@@ -742,7 +848,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
       )}
 
       {/* ========================================================
-          STEP 6: CLEAN & POLISHED THANK-YOU PAGE
+          STEP 6: CLEAN & POLISHED CONFIRMATION SCREEN
       ======================================================== */}
       {step === 6 && (
         <div className="text-center py-5 sm:py-8 space-y-6 animate-in fade-in duration-300">
@@ -825,7 +931,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
               <div className="flex items-center justify-center gap-2.5">
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(
-                    "Assalamu Alaikum! I just joined the early access waitlist for Digital Taqwa — an intentional Islamic companion by Barakah Habits Daily: " +
+                    "Assalamu Alaikum! I just joined the early access waitlist for Digital Taqwa — an intentional Islamic sanctuary by Barakah Habits Daily: " +
                       successData.referralLink
                   )}`}
                   target="_blank"

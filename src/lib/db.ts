@@ -132,14 +132,30 @@ export async function createWaitlistUser(
           await supabaseAdmin.from("user_challenges").insert(challengesPayload);
         }
 
-        // 3. Insert features
-        if (data.features && data.features.length > 0) {
+        // 3. Insert features (desired solutions / frustrations)
+        if (data.desired_solutions && data.desired_solutions.length > 0) {
+          const featuresPayload = data.desired_solutions.map((f) => ({
+            user_id: userId,
+            feature_key: f,
+            is_primary: f === data.primary_feature,
+          }));
+          await supabaseAdmin.from("feature_interests").insert(featuresPayload);
+        } else if (data.features && data.features.length > 0) {
           const featuresPayload = data.features.map((f) => ({
             user_id: userId,
             feature_key: f,
             is_primary: f === data.primary_feature,
           }));
           await supabaseAdmin.from("feature_interests").insert(featuresPayload);
+        }
+
+        // 3b. Insert usage priorities (current approaches / workarounds)
+        if (data.usage_priorities && data.usage_priorities.length > 0) {
+          const prioritiesPayload = data.usage_priorities.map((p) => ({
+            user_id: userId,
+            priority_key: p,
+          }));
+          await supabaseAdmin.from("usage_priorities").insert(prioritiesPayload);
         }
 
         // 4. Insert attribution
