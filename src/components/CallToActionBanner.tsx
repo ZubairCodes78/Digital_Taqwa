@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import { TiltCard3D } from "./TiltCard3D";
+import { trackCtaClick } from "@/lib/analytics";
 
 export function CallToActionBanner() {
   const scrollTo = (id: string) => {
@@ -38,7 +39,10 @@ export function CallToActionBanner() {
               </p>
 
               <button
-                onClick={() => scrollTo("waitlist")}
+                onClick={() => {
+                  trackCtaClick("shape_app_join_waitlist", "cta_banner");
+                  scrollTo("waitlist");
+                }}
                 className="px-10 py-4 rounded-full bg-[#B79A62] text-[#0A1410] text-sm uppercase tracking-wider font-extrabold hover:bg-[#D8C296] transition-all inline-flex items-center space-x-2 shadow-2xl hover:scale-105 active:scale-95"
               >
                 <span>Shape the App &bull; Join Waitlist</span>

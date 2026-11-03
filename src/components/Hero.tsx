@@ -5,6 +5,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { SwipeExploreButton } from "./SwipeExploreButton";
+import { trackCtaClick } from "@/lib/analytics";
 
 // Load 3D scene only on capable desktop devices to guarantee instant mobile performance
 const ThreeIslamicScene = dynamic(
@@ -121,7 +122,10 @@ export function Hero() {
         {/* Primary & Secondary CTAs with Modern Direction Animations */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-5 w-full sm:w-auto mb-14 px-4 sm:px-0">
           <button
-            onClick={() => scrollTo("waitlist")}
+            onClick={() => {
+              trackCtaClick("join_waitlist", "hero_primary");
+              scrollTo("waitlist");
+            }}
             className="group relative px-8 sm:px-10 py-4 rounded-full bg-[#B79A62] text-[#0A1410] text-sm uppercase tracking-wider font-extrabold hover:bg-[#D8C296] transition-all flex items-center justify-center gap-2 shadow-2xl shadow-[#B79A62]/35 hover:shadow-[#B79A62]/55 hover:-translate-y-1 active:translate-y-0"
           >
             <span>JOIN THE WAITLIST</span>
@@ -129,7 +133,10 @@ export function Hero() {
           </button>
 
           <button
-            onClick={() => scrollTo("vision")}
+            onClick={() => {
+              trackCtaClick("discover_vision", "hero_secondary");
+              scrollTo("vision");
+            }}
             className="px-7 sm:px-9 py-4 rounded-full border border-[#B79A62]/40 bg-[#111713]/60 text-[#F6F4ED] text-sm uppercase tracking-wider font-bold hover:border-[#B79A62] hover:bg-[#19372D]/70 transition-all flex items-center justify-center gap-2 backdrop-blur-md hover:-translate-y-0.5 active:translate-y-0"
           >
             <span>DISCOVER OUR VISION</span>

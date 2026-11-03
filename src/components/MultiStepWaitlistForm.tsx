@@ -9,9 +9,12 @@ import {
 import {
   captureAndPersistAttribution,
   getStoredAttribution,
-  trackFormStarted,
+  trackSurveyStart,
+  trackSurveyComplete,
+  trackWaitlistSignup,
+  trackBetaInterest,
+  trackCtaClick,
   trackFormStepCompleted,
-  trackLead,
 } from "@/lib/analytics";
 import {
   ArrowRight,
@@ -76,7 +79,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
   const handleStartInteraction = () => {
     if (!started) {
       setStarted(true);
-      trackFormStarted();
+      trackSurveyStart(1);
     }
   };
 
@@ -99,6 +102,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     }
     setErrorMessage("");
     trackFormStepCompleted(2, "sanctuary_vision");
+    trackSurveyComplete(3);
     setStep(3);
   };
 
@@ -171,7 +175,16 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
         return;
       }
 
-      trackLead(primaryVision, country || "Global");
+      trackWaitlistSignup({
+        country: country || "Global",
+        method: "conversational_form",
+        is_beta_tester: betaTester,
+      });
+
+      if (betaTester) {
+        trackBetaInterest(true, "waitlist_survey");
+      }
+
       const successPayload = {
         email: data.user?.email || emailTrimmed,
         referralCode: data.user?.referral_code || "",
@@ -204,6 +217,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
     if (!successData?.referralLink) return;
     navigator.clipboard.writeText(successData.referralLink);
     setCopied(true);
+    trackCtaClick("copy_referral_link", "thank_you_screen");
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -603,6 +617,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
               href="https://digitaltaqwa.site"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackCtaClick("explore_digital_taqwa", "thank_you_screen")}
               className="group inline-flex items-center justify-center space-x-2 px-9 py-4 rounded-full bg-gradient-to-r from-[#B79A62] via-[#D8C296] to-[#B79A62] text-[#0A1410] font-display text-xs sm:text-sm font-black uppercase tracking-wider shadow-[0_10px_35px_rgba(183,154,98,0.35)] hover:shadow-[0_12px_45px_rgba(183,154,98,0.55)] hover:scale-105 active:scale-95 transition-all duration-300"
             >
               <span>EXPLORE DIGITAL TAQWA</span>
@@ -614,6 +629,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                 href="https://digitaltaqwa.site"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackCtaClick("explore_digital_taqwa_text", "thank_you_screen")}
                 className="text-xs text-[#E8D6AC]/85 hover:text-[#F6F4ED] underline underline-offset-4 font-mono transition-colors"
               >
                 https://digitaltaqwa.site
@@ -662,6 +678,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackCtaClick("share_whatsapp", "thank_you_screen")}
                   className="px-4 py-2 rounded-xl border border-white/15 hover:border-[#B79A62] text-xs text-[#DDE4D9] hover:text-[#F6F4ED] flex items-center space-x-2 transition-colors bg-white/5"
                 >
                   <MessageCircle className="w-4 h-4 text-emerald-400" />
@@ -675,6 +692,7 @@ export function MultiStepWaitlistForm({ onSuccess, onStepChange }: MultiStepWait
             <button
               type="button"
               onClick={() => {
+                trackCtaClick("return_to_homepage", "thank_you_screen");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className="text-xs text-[#DDE4D9]/50 hover:text-[#F6F4ED] uppercase tracking-wider font-mono transition-colors"

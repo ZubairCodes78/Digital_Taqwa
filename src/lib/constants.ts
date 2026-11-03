@@ -31,6 +31,9 @@ export const SOCIAL_PROFILES = {
   },
 };
 
+// Analytics & Tracking
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-GLZ1CKWRT1";
+
 // ============================================================================
 // RESEARCH-LED SURVEY ARCHITECTURE FOR DIGITAL TAQWA
 // Grounded in human-centered design, Islamic digital wellbeing, and churn analysis

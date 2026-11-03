@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Volume2, VolumeX, Play, Pause, SkipForward, X } from "lucide-react";
 import { YOUTUBE_QURAN_PLAYLIST } from "@/lib/constants";
+import { trackAudioPlay, trackAudioPause } from "@/lib/analytics";
 
 declare global {
   interface Window {
@@ -158,10 +159,18 @@ export function AmbientQuranAudio() {
               setAutoplayBlocked(false);
               setShowPopover(false);
               isAutoPausedByTabSwitch.current = false;
+              const activeTrack = YOUTUBE_QURAN_PLAYLIST[currentTrackIndexRef.current];
+              if (activeTrack) {
+                trackAudioPlay(activeTrack.title, activeTrack.reciter, !hasUserPausedManually.current);
+              }
             } else if (state === 2) {
               // Only consider paused if not in between track switch and not auto-paused by tab switch
               if (!isTransitioningRef.current && !isAutoPausedByTabSwitch.current) {
                 setIsPlaying(false);
+                const activeTrack = YOUTUBE_QURAN_PLAYLIST[currentTrackIndexRef.current];
+                if (activeTrack) {
+                  trackAudioPause(activeTrack.title, "user");
+                }
               }
             }
           },
@@ -220,6 +229,10 @@ export function AmbientQuranAudio() {
             }
           } catch (e) {}
           setIsPlaying(false);
+          const activeTrack = YOUTUBE_QURAN_PLAYLIST[currentTrackIndexRef.current];
+          if (activeTrack) {
+            trackAudioPause(activeTrack.title, "tab_switch");
+          }
         }
       } else if (document.visibilityState === "visible") {
         // Tab is active / returned to
@@ -252,6 +265,10 @@ export function AmbientQuranAudio() {
           }
         } catch (e) {}
         setIsPlaying(false);
+        const activeTrack = YOUTUBE_QURAN_PLAYLIST[currentTrackIndexRef.current];
+        if (activeTrack) {
+          trackAudioPause(activeTrack.title, "window_blur");
+        }
       }
     };
 
@@ -331,6 +348,7 @@ export function AmbientQuranAudio() {
       hasUserPausedManually.current = true;
       wasPlayingBeforeTabSwitch.current = false;
       isAutoPausedByTabSwitch.current = false;
+      trackAudioPause(currentTrack.title, "user");
     } else {
       hasUserPausedManually.current = false;
       wasPlayingBeforeTabSwitch.current = false;
@@ -339,6 +357,7 @@ export function AmbientQuranAudio() {
       if (typeof player.playVideo === "function") player.playVideo();
       setIsPlaying(true);
       setAutoplayBlocked(false);
+      trackAudioPlay(currentTrack.title, currentTrack.reciter, false);
     }
   };
 

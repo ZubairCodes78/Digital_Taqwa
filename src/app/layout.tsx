@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import Script from "next/script";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { AmbientQuranAudio } from "@/components/AmbientQuranAudio";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { GA_MEASUREMENT_ID } from "@/lib/constants";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -85,7 +88,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const gaId = GA_MEASUREMENT_ID;
   const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
   return (
@@ -98,24 +101,18 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://server11.mp3quran.net" />
 
         {/* Google Analytics 4 */}
-        {gaId && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}', {
-                  page_path: window.location.pathname,
-                });
-              `}
-            </Script>
-          </>
-        )}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${gaId}');
+          `}
+        </Script>
 
         {/* Meta Pixel */}
         {metaPixelId && (
@@ -136,6 +133,9 @@ export default function RootLayout({
         )}
       </head>
       <body className="bg-ivory text-charcoal font-sans antialiased selection:bg-forest selection:text-ivory min-h-screen">
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         {children}
         <AmbientQuranAudio />
       </body>

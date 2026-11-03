@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { trackCtaClick } from "@/lib/analytics";
 
 interface SwipeExploreButtonProps {
   targetId?: string;
@@ -16,6 +17,7 @@ export function SwipeExploreButton({
   const touchStartY = useRef<number | null>(null);
 
   const performSmoothScroll = () => {
+    trackCtaClick("swipe_explore_vision", "hero_mihrab");
     const el = document.getElementById(targetId);
     if (!el) {
       window.scrollTo({ top: window.innerHeight * 0.9, behavior: "smooth" });

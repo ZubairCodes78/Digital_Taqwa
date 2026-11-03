@@ -1,4 +1,5 @@
 import { AttributionData } from "@/types";
+import { GA_MEASUREMENT_ID } from "./constants";
 
 declare global {
   interface Window {
@@ -6,11 +7,56 @@ declare global {
     gtag?: (...args: any[]) => void;
     fbq?: (...args: any[]) => void;
     _fbq?: any;
+    __dt_debug_ga?: boolean;
   }
 }
 
 const ATTRIBUTION_STORAGE_KEY = "digital_taqwa_attribution";
 const LEAD_TRACKED_KEY = "digital_taqwa_lead_tracked";
+
+/**
+ * Checks whether debug_mode should be attached to GA4 events.
+ * Enabled automatically in development or when `?debug_ga=true` is in the URL.
+ */
+function isDebugMode(): boolean {
+  if (typeof window === "undefined") return false;
+  if (process.env.NODE_ENV === "development" || window.__dt_debug_ga) return true;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("debug_ga") === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Core GA4 Event Dispatcher
+ * Ensures window.gtag is available, attaches debug_mode if active,
+ * and strips any potential undefined / null fields.
+ */
+export function sendGAEvent(eventName: string, params: Record<string, any> = {}) {
+  if (typeof window === "undefined") return;
+
+  const cleanParams: Record<string, any> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      cleanParams[key] = value;
+    }
+  }
+
+  if (isDebugMode()) {
+    cleanParams.debug_mode = true;
+  }
+
+  if (typeof window.gtag === "function") {
+    window.gtag("event", eventName, cleanParams);
+  } else if (Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({
+      event: eventName,
+      ...cleanParams,
+    });
+  }
+}
 
 /**
  * Extracts UTM parameters and referrer from the current browser window and stores them.
@@ -32,7 +78,6 @@ export function captureAndPersistAttribution(): AttributionData {
     const utmTerm = params.get("utm_term");
     const refCode = params.get("ref");
 
-    // Only update if new parameters are present or if first visit
     if (utmSource || utmMedium || utmCampaign || refCode || !attribution.landing_page) {
       attribution = {
         utm_source: utmSource || attribution.utm_source || "direct",
@@ -47,7 +92,6 @@ export function captureAndPersistAttribution(): AttributionData {
 
       localStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(attribution));
 
-      // Also set a first-party cookie for resilience
       document.cookie = `dt_utm=${encodeURIComponent(
         JSON.stringify(attribution)
       )}; path=/; max-age=2592000; SameSite=Lax`;
@@ -69,7 +113,6 @@ export function getStoredAttribution(): AttributionData {
     const raw = localStorage.getItem(ATTRIBUTION_STORAGE_KEY);
     if (raw) return JSON.parse(raw);
 
-    // Fallback to cookie
     const match = document.cookie.match(new RegExp("(^| )dt_utm=([^;]+)"));
     if (match) {
       return JSON.parse(decodeURIComponent(match[2]));
@@ -84,37 +127,126 @@ export function getStoredAttribution(): AttributionData {
   };
 }
 
+// ============================================================================
+// GA4 SPECIFIC TRACKING FUNCTIONS (ZERO PII)
+// ============================================================================
+
 /**
- * Track PageView event
+ * Track SPA Route change / page_view without duplicating initial load.
  */
 export function trackPageView(url?: string) {
   if (typeof window === "undefined") return;
 
-  // Google Analytics 4
-  if (window.gtag) {
-    window.gtag("event", "page_view", {
-      page_location: url || window.location.href,
-    });
-  }
+  const pagePath = url || window.location.pathname + window.location.search;
+  const pageLocation = window.location.href;
 
-  // Meta Pixel
+  sendGAEvent("page_view", {
+    page_path: pagePath,
+    page_location: pageLocation,
+    send_to: GA_MEASUREMENT_ID,
+  });
+
   if (window.fbq) {
     window.fbq("track", "PageView");
   }
 }
 
 /**
- * Track ViewContent event
+ * Track Successful Waitlist Registration
+ * STRICT PRIVACY: Zero PII (no names, emails, phones, or raw survey answers)
  */
-export function trackViewContent(contentName: string, category: string = "Landing Page") {
-  if (typeof window === "undefined") return;
+export function trackWaitlistSignup(options?: {
+  country?: string;
+  method?: string;
+  is_beta_tester?: boolean;
+}) {
+  sendGAEvent("waitlist_signup", {
+    method: options?.method || "conversational_form",
+    country: options?.country || "Global",
+    is_beta_tester: options?.is_beta_tester ?? true,
+  });
 
-  if (window.gtag) {
-    window.gtag("event", "view_item", {
-      item_name: contentName,
-      item_category: category,
+  // Also record standard lead
+  trackLead("Waitlist Registration", options?.country || "Global");
+}
+
+/**
+ * Track Survey / Conversational Form Start
+ */
+export function trackSurveyStart(step: number = 1) {
+  sendGAEvent("survey_start", {
+    form_name: "conversational_inquiry",
+    step,
+  });
+
+  if (window.fbq) {
+    window.fbq("trackCustom", "FormStarted", {
+      form_name: "conversational_inquiry",
     });
   }
+}
+
+/**
+ * Track Survey / Conversational Form Completion
+ */
+export function trackSurveyComplete(totalSteps: number = 3) {
+  sendGAEvent("survey_complete", {
+    form_name: "conversational_inquiry",
+    total_steps: totalSteps,
+  });
+}
+
+/**
+ * Track Beta Interest Expression
+ */
+export function trackBetaInterest(interested: boolean = true, source: string = "waitlist_survey") {
+  sendGAEvent("beta_interest", {
+    interested,
+    source,
+  });
+}
+
+/**
+ * Track Quran Recitation Start
+ */
+export function trackAudioPlay(trackTitle: string, reciter: string = "Sheikh Yasser Al-Dosari", autoplay: boolean = true) {
+  sendGAEvent("audio_play", {
+    track_title: trackTitle,
+    reciter,
+    autoplay,
+  });
+}
+
+/**
+ * Track Quran Recitation Pause
+ */
+export function trackAudioPause(trackTitle: string, pausedBy: "user" | "tab_switch" | "window_blur" | string = "user") {
+  sendGAEvent("audio_pause", {
+    track_title: trackTitle,
+    paused_by: pausedBy,
+  });
+}
+
+/**
+ * Track Call To Action Clicks
+ */
+export function trackCtaClick(ctaName: string, ctaLocation: string, additionalParams?: Record<string, any>) {
+  sendGAEvent("cta_click", {
+    cta_name: ctaName,
+    cta_location: ctaLocation,
+    ...additionalParams,
+  });
+}
+
+// ============================================================================
+// BACKWARD-COMPATIBLE HELPERS
+// ============================================================================
+
+export function trackViewContent(contentName: string, category: string = "Landing Page") {
+  sendGAEvent("view_item", {
+    item_name: contentName,
+    item_category: category,
+  });
 
   if (window.fbq) {
     window.fbq("track", "ViewContent", {
@@ -124,37 +256,15 @@ export function trackViewContent(contentName: string, category: string = "Landin
   }
 }
 
-/**
- * Track FormStarted event
- */
 export function trackFormStarted() {
-  if (typeof window === "undefined") return;
-
-  if (window.gtag) {
-    window.gtag("event", "form_start", {
-      form_name: "waitlist_survey",
-    });
-  }
-
-  if (window.fbq) {
-    window.fbq("trackCustom", "FormStarted", {
-      form_name: "waitlist_survey",
-    });
-  }
+  trackSurveyStart(1);
 }
 
-/**
- * Track FormStepCompleted event
- */
 export function trackFormStepCompleted(stepNumber: number, stepName: string) {
-  if (typeof window === "undefined") return;
-
-  if (window.gtag) {
-    window.gtag("event", "form_step_completed", {
-      step_number: stepNumber,
-      step_name: stepName,
-    });
-  }
+  sendGAEvent("form_step_completed", {
+    step_number: stepNumber,
+    step_name: stepName,
+  });
 
   if (window.fbq) {
     window.fbq("trackCustom", "FormStepCompleted", {
@@ -164,25 +274,19 @@ export function trackFormStepCompleted(stepNumber: number, stepName: string) {
   }
 }
 
-/**
- * Track Lead event (With duplicate prevention)
- */
 export function trackLead(primaryInterest: string, country: string) {
   if (typeof window === "undefined") return;
 
-  // Prevent duplicate Lead triggers within the same session
   if (sessionStorage.getItem(LEAD_TRACKED_KEY)) {
     return;
   }
   sessionStorage.setItem(LEAD_TRACKED_KEY, "true");
 
-  if (window.gtag) {
-    window.gtag("event", "generate_lead", {
-      lead_type: "waitlist",
-      primary_interest: primaryInterest,
-      country: country,
-    });
-  }
+  sendGAEvent("generate_lead", {
+    lead_type: "waitlist",
+    primary_interest: primaryInterest,
+    country: country,
+  });
 
   if (window.fbq) {
     window.fbq("track", "Lead", {
@@ -191,5 +295,3 @@ export function trackLead(primaryInterest: string, country: string) {
     });
   }
 }
-
-

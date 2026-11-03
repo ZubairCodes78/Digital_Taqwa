@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { trackCtaClick } from "@/lib/analytics";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -83,7 +84,10 @@ export function Navbar() {
             FAQ
           </button>
           <button
-            onClick={() => scrollTo("waitlist")}
+            onClick={() => {
+              trackCtaClick("join_waitlist", "navbar_desktop");
+              scrollTo("waitlist");
+            }}
             className="px-5 py-2.5 rounded-full bg-[#B79A62] text-[#0A1410] font-bold text-xs tracking-wider uppercase hover:bg-[#D8C296] transition-all shadow-md hover:shadow-lg hover:shadow-[#B79A62]/25 hover:scale-105 active:scale-95"
           >
             Join Waitlist
@@ -129,7 +133,10 @@ export function Navbar() {
               04. FAQ
             </button>
             <button
-              onClick={() => scrollTo("waitlist")}
+              onClick={() => {
+                trackCtaClick("join_waitlist", "navbar_mobile");
+                scrollTo("waitlist");
+              }}
               className="w-full text-center py-3 rounded-full bg-[#B79A62] text-[#0A1410] font-black text-xs tracking-wider uppercase mt-2 shadow-md"
             >
               Join the Waitlist
