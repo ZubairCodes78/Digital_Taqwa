@@ -82,7 +82,7 @@ export function Hero() {
         <div className="relative w-48 h-24 sm:w-60 sm:h-32 md:w-72 md:h-36 mx-auto mb-6 sm:mb-8 transition-transform duration-700 hover:scale-105 animate-float">
           <Image
             src="/logo.png"
-            alt="Digital Taqwa"
+            alt="Digital Taqwa — Make Space for What Truly Matters"
             fill
             sizes="(max-width: 640px) 192px, (max-width: 768px) 240px, 288px"
             priority
@@ -95,7 +95,7 @@ export function Hero() {
           <div className="relative w-4 h-4 rounded-full overflow-hidden border border-[#B79A62]/60 shrink-0">
             <Image
               src="/barakah-habits-logo.jpg"
-              alt="Barakah Habits Daily"
+              alt="Barakah Habits Daily — Inspiring Intentional Islamic Living"
               fill
               sizes="16px"
               className="object-cover"

@@ -7,17 +7,67 @@ import {
   CheckCircle2,
   Mail,
 } from "lucide-react";
+import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 
-export const metadata = {
-  title: "Privacy Policy & Islamic Data Ethics — Digital Taqwa",
+export const metadata: Metadata = {
+  title: "Privacy Policy & Islamic Data Ethics (Amanah) — Digital Taqwa",
   description:
-    "Our sacred commitments to Islamic privacy, data protection (Amanah), and non-commercial stewardship at Digital Taqwa.",
+    "Our sacred commitments to Islamic privacy, data protection (Amanah), zero commercial ads, and non-commercial stewardship at Digital Taqwa.",
+  alternates: {
+    canonical: "https://digitaltaqwa.site/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy & Islamic Data Ethics — Digital Taqwa",
+    description:
+      "Our sacred commitments to Islamic privacy, data protection (Amanah), and non-commercial stewardship at Digital Taqwa.",
+    url: "https://digitaltaqwa.site/privacy",
+    siteName: "Digital Taqwa",
+    type: "article",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Taqwa — Make Space for What Truly Matters",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy & Islamic Data Ethics — Digital Taqwa",
+    description:
+      "Our sacred commitments to Islamic privacy, data protection (Amanah), and non-commercial stewardship at Digital Taqwa.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function PrivacyPage() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Sanctuary",
+        item: "https://digitaltaqwa.site",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Privacy Policy",
+        item: "https://digitaltaqwa.site/privacy",
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-[#0A1410] text-[#F6F4ED] selection:bg-[#B79A62] selection:text-[#0A1410] relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Ambient background glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#19372D]/35 rounded-full blur-[160px] pointer-events-none -z-0" />
       <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#B79A62]/5 rounded-full blur-[140px] pointer-events-none -z-0" />
@@ -37,7 +87,7 @@ export default function PrivacyPage() {
             <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#B79A62]/50">
               <Image
                 src="/barakah-habits-logo.jpg"
-                alt="Barakah Habits Daily"
+                alt="Barakah Habits Daily — Official Logo"
                 fill
                 sizes="28px"
                 className="object-cover"

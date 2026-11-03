@@ -1,27 +1,27 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://digitaltaqwa.com";
+  const canonicalUrl = "https://digitaltaqwa.site";
+  const lastModified = new Date();
 
   return [
     {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
+      url: `${canonicalUrl}/`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 1.0,
     },
     {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      url: `${canonicalUrl}/privacy`,
+      lastModified,
       changeFrequency: "monthly",
-      priority: 0.3,
+      priority: 0.5,
     },
     {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
+      url: `${canonicalUrl}/terms`,
+      lastModified,
       changeFrequency: "monthly",
-      priority: 0.3,
+      priority: 0.5,
     },
   ];
 }
-

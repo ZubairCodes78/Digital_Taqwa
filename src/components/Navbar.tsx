@@ -40,7 +40,7 @@ export function Navbar() {
           <div className="relative w-9 h-9 sm:w-11 sm:h-11 shrink-0 transition-transform duration-300 group-hover:scale-105">
             <Image
               src="/logo-icon.png"
-              alt="Digital Taqwa"
+              alt="Digital Taqwa — Official Logo Icon"
               fill
               sizes="44px"
               priority

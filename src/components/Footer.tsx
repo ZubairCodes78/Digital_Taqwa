@@ -17,7 +17,7 @@ export function Footer() {
               <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 transition-transform group-hover:scale-105">
                 <Image
                   src="/logo-icon.png"
-                  alt="Digital Taqwa"
+                  alt="Digital Taqwa — Official Logo Icon"
                   fill
                   sizes="36px"
                   className="object-contain"
@@ -32,7 +32,7 @@ export function Footer() {
               <div className="relative w-4 h-4 rounded-full overflow-hidden border border-[#B79A62]/60 shrink-0">
                 <Image
                   src="/barakah-habits-logo.jpg"
-                  alt="Barakah Habits Daily"
+                  alt="Barakah Habits Daily — Official Logo"
                   fill
                   sizes="16px"
                   className="object-cover"

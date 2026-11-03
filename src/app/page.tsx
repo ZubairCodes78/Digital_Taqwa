@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { TheProblem } from "@/components/TheProblem";
@@ -9,14 +10,37 @@ import { FAQSection } from "@/components/FAQSection";
 import { CallToActionBanner } from "@/components/CallToActionBanner";
 import { Footer } from "@/components/Footer";
 
-export const metadata = {
-  title: "Digital Taqwa — A Project by Barakah Habits Daily",
+export const metadata: Metadata = {
+  title: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
   description:
-    "Reconnect with Allah. Build better habits. Live with intention. An intentional Islamic digital sanctuary.",
+    "An early-stage Islamic digital sanctuary exploring how mindful technology, prayer presence, and Sunnah habits can help you make space for what truly matters. A project by Barakah Habits Daily.",
+  alternates: {
+    canonical: "https://digitaltaqwa.site",
+  },
   openGraph: {
-    title: "Digital Taqwa — A Project by Barakah Habits Daily",
-    description: "Make Space for What Truly Matters.",
-    images: [{ url: "/logo.png" }],
+    title: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
+    description:
+      "An early-stage initiative exploring how digital experiences can support Islamic habits, intentional living and a more mindful relationship with technology.",
+    url: "https://digitaltaqwa.site",
+    siteName: "Digital Taqwa",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Taqwa — Make Space for What Truly Matters",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
+    description:
+      "An early-stage initiative exploring how digital experiences can support Islamic habits, intentional living and a more mindful relationship with technology.",
+    images: ["/logo.png"],
+    creator: "@barakahhabitsdaily",
   },
 };
 

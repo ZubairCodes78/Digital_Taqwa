@@ -4,7 +4,8 @@ import Script from "next/script";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { AmbientQuranAudio } from "@/components/AmbientQuranAudio";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
-import { GA_MEASUREMENT_ID } from "@/lib/constants";
+import { JsonLd } from "@/components/JsonLd";
+import { GA_MEASUREMENT_ID, SOCIAL_PROFILES } from "@/lib/constants";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -20,44 +21,74 @@ const outfit = Outfit({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#F6F4ED",
+  themeColor: "#0A1410",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://digitaltaqwa.com"),
-  title: "Digital Taqwa — Make Space for What Truly Matters",
+  metadataBase: new URL("https://digitaltaqwa.site"),
+  title: {
+    default: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
+    template: "%s | Digital Taqwa",
+  },
   description:
-    "Build better habits, strengthen your Deen, and create a more intentional digital life. Join the early access waitlist.",
+    "An early-stage Islamic digital sanctuary exploring how mindful technology, prayer consistency, Quran reading, and Sunnah habits can bring tranquility to your Deen. A project by Barakah Habits Daily.",
   keywords: [
     "Digital Taqwa",
     "Islamic digital wellness",
-    "Islamic habit companion",
+    "Islamic habit building",
+    "Barakah Habits Daily",
     "Prayer consistency",
-    "Quran tracker",
-    "Screen time control",
-    "Mindful Deen habits",
+    "Mindful Quran recitation",
+    "Islamic habit tracker",
+    "Deen consistency",
+    "Reduce phone distractions Islam",
+    "Sunnah habits",
+    "Khushu in Salah",
   ],
-  authors: [{ name: "Digital Taqwa" }],
-  creator: "Digital Taqwa",
+  authors: [
+    { name: "Digital Taqwa", url: "https://digitaltaqwa.site" },
+    { name: "Barakah Habits Daily", url: SOCIAL_PROFILES.youtube.url },
+  ],
+  creator: "Barakah Habits Daily",
   publisher: "Digital Taqwa",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: "https://digitaltaqwa.site",
+  },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+      }
+    : undefined,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://digitaltaqwa.com",
+    url: "https://digitaltaqwa.site",
     siteName: "Digital Taqwa",
-    title: "Digital Taqwa — Make Space for What Truly Matters",
+    title: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
     description:
-      "Build better habits, strengthen your Deen, and create a more intentional digital life.",
+      "An early-stage initiative exploring how digital experiences can support Islamic habits, intentional living and a more mindful relationship with technology.",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "Digital Taqwa — Make Space for What Truly Matters",
@@ -66,10 +97,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Digital Taqwa — Make Space for What Truly Matters",
+    title: "Digital Taqwa — Reconnect With Allah. One Day at a Time.",
     description:
-      "Build better habits, strengthen your Deen, and create a more intentional digital life.",
-    images: ["/og-image.jpg"],
+      "An early-stage initiative exploring how digital experiences can support Islamic habits, intentional living and a more mindful relationship with technology.",
+    images: ["/logo.png"],
+    creator: "@barakahhabitsdaily",
   },
   icons: {
     icon: [
@@ -99,6 +131,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://server11.mp3quran.net" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.mp3quran.net" />
         <link rel="dns-prefetch" href="https://server11.mp3quran.net" />
+
+        {/* Structured Data (JSON-LD) for SEO, AEO & GEO */}
+        <JsonLd />
 
         {/* Google Analytics 4 */}
         <Script

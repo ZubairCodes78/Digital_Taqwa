@@ -11,17 +11,67 @@ import {
   UserCheck,
   CheckCircle2,
 } from "lucide-react";
+import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Terms of Service & Community Covenant — Digital Taqwa",
   description:
-    "Terms and ethical covenants governing the pre-launch research community and early-access platform for Digital Taqwa.",
+    "Ethical covenants and terms governing the pre-launch research community and early-access platform for Digital Taqwa. A project by Barakah Habits Daily.",
+  alternates: {
+    canonical: "https://digitaltaqwa.site/terms",
+  },
+  openGraph: {
+    title: "Terms of Service & Community Covenant — Digital Taqwa",
+    description:
+      "Terms and ethical covenants governing the pre-launch research community and early-access platform for Digital Taqwa.",
+    url: "https://digitaltaqwa.site/terms",
+    siteName: "Digital Taqwa",
+    type: "article",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Taqwa — Make Space for What Truly Matters",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Service & Community Covenant — Digital Taqwa",
+    description:
+      "Terms and ethical covenants governing the pre-launch research community and early-access platform for Digital Taqwa.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function TermsPage() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Sanctuary",
+        item: "https://digitaltaqwa.site",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Terms of Service",
+        item: "https://digitaltaqwa.site/terms",
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-[#0A1410] text-[#F6F4ED] selection:bg-[#B79A62] selection:text-[#0A1410] relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Ambient background glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#19372D]/35 rounded-full blur-[160px] pointer-events-none -z-0" />
       <div className="absolute top-1/3 right-10 w-[500px] h-[500px] bg-[#B79A62]/5 rounded-full blur-[140px] pointer-events-none -z-0" />
@@ -41,7 +91,7 @@ export default function TermsPage() {
             <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#B79A62]/50">
               <Image
                 src="/barakah-habits-logo.jpg"
-                alt="Barakah Habits Daily"
+                alt="Barakah Habits Daily — Official Logo"
                 fill
                 sizes="28px"
                 className="object-cover"
